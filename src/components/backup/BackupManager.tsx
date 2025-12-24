@@ -301,11 +301,18 @@ export function BackupManager() {
             </div>
           )}
 
-          {settings?.last_backup_at && (
-            <p className="text-sm text-muted-foreground">
-              Last backup: {format(new Date(settings.last_backup_at), "PPpp")}
+          <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+            {settings?.last_backup_at && (
+              <p>Last backup: {format(new Date(settings.last_backup_at), "PPpp")}</p>
+            )}
+            {settings?.next_backup_at && (
+              <p>Next scheduled backup: {format(new Date(settings.next_backup_at), "PPpp")}</p>
+            )}
+            <p className="text-xs mt-2 flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3 text-green-500" />
+              Cron job running hourly to check for due backups
             </p>
-          )}
+          </div>
         </CardContent>
       </Card>
 
