@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Mail, Lock, Loader2, Sparkles } from "lucide-react";
+import { Mail, Lock, Loader2, Sparkles, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,17 +18,18 @@ const passwordSchema = z.string().min(6, "Password must be at least 6 characters
 export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showOtpInput, setShowOtpInput] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
 
-  // Get the intended destination from location state, or default to home
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/";
 
-  // Redirect authenticated users away from auth page
   useEffect(() => {
     if (!authLoading && user) {
       navigate(from, { replace: true });
@@ -68,6 +70,12 @@ export default function Auth() {
             description: "Invalid email or password. Please try again.",
             variant: "destructive",
           });
+        } else if (error.message.includes("Email not confirmed")) {
+          toast({
+            title: "Email not verified",
+            description: "Please check your email for the verification link or sign up again.",
+            variant: "destructive",
+          });
         } else {
           toast({
             title: "Sign in failed",
@@ -82,7 +90,7 @@ export default function Auth() {
         title: "Welcome back!",
         description: "You've signed in successfully.",
       });
-      navigate("/");
+      navigate(from, { replace: true });
     } catch (error) {
       toast({
         title: "Error",
@@ -101,7 +109,7 @@ export default function Auth() {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -126,11 +134,22 @@ export default function Auth() {
         return;
       }
 
-      toast({
-        title: "Account created!",
-        description: "You can now sign in with your credentials.",
-      });
-      navigate("/");
+      // Check if email confirmation is required
+      if (data.user && !data.session) {
+        setPendingEmail(email);
+        setShowOtpInput(true);
+        toast({
+          title: "Check your email",
+          description: "We've sent you a verification link. Please check your inbox.",
+        });
+      } else if (data.session) {
+        // Auto-confirmed (for development)
+        toast({
+          title: "Account created!",
+          description: "Welcome to AI Work Assistant.",
+        });
+        navigate(from, { replace: true });
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -142,10 +161,152 @@ export default function Auth() {
     }
   };
 
+  const handleVerifyOtp = async () => {
+    if (otp.length !== 6) {
+      toast({
+        title: "Invalid code",
+        description: "Please enter the 6-digit verification code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: pendingEmail,
+        token: otp,
+        type: "signup",
+      });
+
+      if (error) {
+        toast({
+          title: "Verification failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Email verified!",
+        description: "Your account is now active.",
+      });
+      navigate(from, { replace: true });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendCode = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: pendingEmail,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Code resent",
+        description: "Check your email for a new verification link.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to resend verification email.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (showOtpInput) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-background">
+        <div className="w-full max-w-md">
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+              <Sparkles className="w-7 h-7 text-primary" />
+            </div>
+            <span className="text-2xl font-bold text-foreground">AI Work Assistant</span>
+          </div>
+
+          <Card className="glass">
+            <CardHeader className="text-center">
+              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                <KeyRound className="w-8 h-8 text-primary" />
+              </div>
+              <CardTitle>Verify your email</CardTitle>
+              <CardDescription>
+                We sent a verification link to <strong>{pendingEmail}</strong>. 
+                Click the link in your email or enter the code below.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex justify-center">
+                <InputOTP maxLength={6} value={otp} onChange={setOtp}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+
+              <Button 
+                onClick={handleVerifyOtp} 
+                className="w-full" 
+                disabled={isLoading || otp.length !== 6}
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : null}
+                Verify Email
+              </Button>
+
+              <div className="text-center">
+                <button
+                  onClick={handleResendCode}
+                  disabled={isLoading}
+                  className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Didn't receive the email? <span className="underline">Resend</span>
+                </button>
+              </div>
+
+              <Button 
+                variant="ghost" 
+                className="w-full"
+                onClick={() => {
+                  setShowOtpInput(false);
+                  setOtp("");
+                  setPendingEmail("");
+                }}
+              >
+                Back to Sign Up
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="flex items-center justify-center gap-3 mb-8">
           <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
             <Sparkles className="w-7 h-7 text-primary" />
