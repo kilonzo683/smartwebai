@@ -1,29 +1,39 @@
-import { useState, useEffect } from "react";
-import { User, Bell, Shield, Palette, Moon, Sun, LogOut, Loader2, Save } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { User, Bell, Shield, Palette, Moon, Sun, LogOut, Loader2, Save, Camera, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Settings() {
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuth();
   const [profile, setProfile] = useState<{ full_name: string; avatar_url: string }>({
     full_name: "",
     avatar_url: "",
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("dark");
   const [notifications, setNotifications] = useState({
     email: true,
     push: false,
     weekly: true,
   });
+  const [usageStats, setUsageStats] = useState({
+    messages: 0,
+    documents: 0,
+    quizzes: 0,
+    conversations: 0,
+  });
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -35,26 +45,42 @@ export default function Settings() {
       document.documentElement.classList.toggle("dark", savedTheme === "dark");
     }
 
-    // Fetch user and profile
+    // Fetch user profile and stats
     const fetchUserData = async () => {
+      if (!user) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        setUser(user);
+        // Fetch profile
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("full_name, avatar_url")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-        if (user) {
-          const { data: profileData } = await supabase
-            .from("profiles")
-            .select("full_name, avatar_url")
-            .eq("user_id", user.id)
-            .maybeSingle();
-
-          if (profileData) {
-            setProfile({
-              full_name: profileData.full_name || "",
-              avatar_url: profileData.avatar_url || "",
-            });
-          }
+        if (profileData) {
+          setProfile({
+            full_name: profileData.full_name || "",
+            avatar_url: profileData.avatar_url || "",
+          });
         }
+
+        // Fetch usage stats
+        const [conversationsRes, lectureDocsRes, supportDocsRes, quizzesRes] = await Promise.all([
+          supabase.from("conversations").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+          supabase.from("lecture_documents").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+          supabase.from("support_documents").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+          supabase.from("quizzes").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        ]);
+
+        setUsageStats({
+          conversations: conversationsRes.count || 0,
+          documents: (lectureDocsRes.count || 0) + (supportDocsRes.count || 0),
+          quizzes: quizzesRes.count || 0,
+          messages: (conversationsRes.count || 0) * 5, // Estimate
+        });
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
@@ -63,13 +89,78 @@ export default function Settings() {
     };
 
     fetchUserData();
+  }, [user]);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-    });
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
 
-    return () => subscription.unsubscribe();
-  }, []);
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `${user.id}/avatar.${fileExt}`;
+
+      // Upload to storage
+      const { error: uploadError } = await supabase.storage
+        .from("avatars")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("avatars")
+        .getPublicUrl(filePath);
+
+      // Update profile with new avatar URL
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .upsert({
+          user_id: user.id,
+          avatar_url: publicUrl,
+          full_name: profile.full_name,
+        }, { onConflict: "user_id" });
+
+      if (updateError) throw updateError;
+
+      setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
+
+      toast({
+        title: "Avatar updated",
+        description: "Your profile picture has been updated.",
+      });
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload avatar. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     if (!user) return;
@@ -117,6 +208,13 @@ export default function Settings() {
     navigate("/auth");
   };
 
+  const getInitials = (name: string, email: string) => {
+    if (name) {
+      return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+    }
+    return email?.charAt(0).toUpperCase() || "U";
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -162,12 +260,51 @@ export default function Settings() {
             <CardHeader>
               <CardTitle>Profile Information</CardTitle>
               <CardDescription>
-                Update your personal details and public profile
+                Update your personal details and profile picture
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {user ? (
                 <>
+                  {/* Avatar Upload */}
+                  <div className="flex items-center gap-6">
+                    <div className="relative">
+                      <Avatar className="w-24 h-24">
+                        <AvatarImage src={profile.avatar_url} alt={profile.full_name || user.email || ""} />
+                        <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                          {getInitials(profile.full_name, user.email || "")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                      >
+                        {isUploading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Camera className="w-4 h-4" />
+                        )}
+                      </button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                      />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Profile Picture</p>
+                      <p className="text-sm text-muted-foreground">
+                        Click the camera icon to upload a new photo
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Max size: 5MB. Supported formats: JPG, PNG, GIF
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -354,25 +491,25 @@ export default function Settings() {
       <Card className="glass animate-slide-up" style={{ animationDelay: "200ms" }}>
         <CardHeader>
           <CardTitle>Usage Overview</CardTitle>
-          <CardDescription>Your current usage this month</CardDescription>
+          <CardDescription>Your activity summary</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-4 rounded-xl bg-accent/30">
-              <p className="text-2xl font-bold text-foreground">4</p>
-              <p className="text-xs text-muted-foreground">AI Agents</p>
+              <p className="text-2xl font-bold text-foreground">{usageStats.conversations}</p>
+              <p className="text-xs text-muted-foreground">Conversations</p>
             </div>
             <div className="p-4 rounded-xl bg-accent/30">
-              <p className="text-2xl font-bold text-foreground">-</p>
-              <p className="text-xs text-muted-foreground">Messages</p>
-            </div>
-            <div className="p-4 rounded-xl bg-accent/30">
-              <p className="text-2xl font-bold text-foreground">-</p>
+              <p className="text-2xl font-bold text-foreground">{usageStats.documents}</p>
               <p className="text-xs text-muted-foreground">Documents</p>
             </div>
             <div className="p-4 rounded-xl bg-accent/30">
-              <p className="text-2xl font-bold text-foreground">-</p>
+              <p className="text-2xl font-bold text-foreground">{usageStats.quizzes}</p>
               <p className="text-xs text-muted-foreground">Quizzes</p>
+            </div>
+            <div className="p-4 rounded-xl bg-accent/30">
+              <p className="text-2xl font-bold text-foreground">4</p>
+              <p className="text-xs text-muted-foreground">AI Agents</p>
             </div>
           </div>
         </CardContent>
