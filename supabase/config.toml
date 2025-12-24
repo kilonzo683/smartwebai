@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.transcribe-voice]
 verify_jwt = true
+
+[functions.scheduled-backup]
+verify_jwt = false
