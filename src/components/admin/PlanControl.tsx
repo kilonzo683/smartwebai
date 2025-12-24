@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import type { Json } from "@/integrations/supabase/types";
 
 interface Plan {
   id: string;
@@ -23,7 +24,7 @@ interface Plan {
   max_users: number;
   max_agents: number;
   max_messages: number;
-  features: Record<string, unknown>;
+  features: Json;
   is_active: boolean | null;
 }
 
@@ -68,7 +69,7 @@ export function PlanControl() {
       if (error) throw error;
       setPlans((data || []).map(p => ({
         ...p,
-        features: (p.features || {}) as Record<string, unknown>,
+        features: p.features || {},
       })));
     } catch (error) {
       console.error("Error fetching plans:", error);
@@ -115,7 +116,7 @@ export function PlanControl() {
         max_users: formData.max_users,
         max_agents: formData.max_agents,
         max_messages: formData.max_messages,
-        features: formData.features as unknown,
+        features: formData.features,
         is_active: formData.is_active,
       };
       
