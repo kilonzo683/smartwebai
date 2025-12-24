@@ -109,6 +109,7 @@ serve(async (req) => {
         });
       }
 
+      // Use tool calling to get structured quiz data
       const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -120,42 +121,90 @@ serve(async (req) => {
           messages: [
             {
               role: "system",
-              content: `You are an educational AI assistant. Generate a quiz based on the provided document content. 
-Create 5-10 multiple choice questions with 4 options each. Format your response as:
-
-## Quiz: [Topic]
-
-### Question 1
-[Question text]
-
-A) [Option A]
-B) [Option B]
-C) [Option C]
-D) [Option D]
-
-**Correct Answer: [Letter]**
-
-Continue for all questions, then provide a summary of key topics covered.`
+              content: "You are an educational AI assistant. Generate quiz questions based on the provided document content."
             },
             {
               role: "user",
-              content: `Generate a quiz based on this document content:\n\n${extractedText.slice(0, 15000)}`
+              content: `Generate a quiz with 5-10 multiple choice questions based on this document content:\n\n${extractedText.slice(0, 15000)}`
             }
           ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "create_quiz",
+                description: "Create a structured quiz with multiple choice questions",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    title: { 
+                      type: "string", 
+                      description: "A short descriptive title for the quiz based on the content" 
+                    },
+                    questions: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          question: { type: "string", description: "The question text" },
+                          options: { 
+                            type: "array", 
+                            items: { type: "string" },
+                            description: "Array of 4 answer options" 
+                          },
+                          correctAnswer: { 
+                            type: "number", 
+                            description: "Index of the correct answer (0-3)" 
+                          }
+                        },
+                        required: ["question", "options", "correctAnswer"]
+                      }
+                    }
+                  },
+                  required: ["title", "questions"]
+                }
+              }
+            }
+          ],
+          tool_choice: { type: "function", function: { name: "create_quiz" } }
         }),
       });
 
       if (aiResponse.ok) {
         const aiData = await aiResponse.json();
-        const quizContent = aiData.choices?.[0]?.message?.content || "Could not generate quiz";
+        console.log("AI Response:", JSON.stringify(aiData));
         
-        return new Response(JSON.stringify({
-          success: true,
-          document: docRecord,
-          quiz: quizContent,
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+        if (toolCall?.function?.arguments) {
+          const quizData = JSON.parse(toolCall.function.arguments);
+          
+          // Save quiz to database
+          const { data: quizRecord, error: quizError } = await supabase
+            .from("quizzes")
+            .insert({
+              user_id: user.id,
+              document_id: docRecord?.id,
+              title: quizData.title || `Quiz from ${file.name}`,
+              questions: quizData.questions || [],
+            })
+            .select()
+            .single();
+
+          if (quizError) {
+            console.error("Quiz save error:", quizError);
+          }
+
+          return new Response(JSON.stringify({
+            success: true,
+            document: docRecord,
+            quiz: quizRecord,
+            quizData: quizData,
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+      } else {
+        console.error("AI response not ok:", await aiResponse.text());
       }
     }
 

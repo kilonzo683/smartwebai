@@ -6,6 +6,7 @@ import {
   HeadphonesIcon, 
   Share2, 
   GraduationCap,
+  BookOpen,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -49,6 +50,13 @@ const agents = [
     name: "Lecturer Assistant",
     icon: GraduationCap,
     path: "/lecturer",
+    color: "text-agent-lecturer",
+  },
+  {
+    id: "student-quiz",
+    name: "Student Quizzes",
+    icon: BookOpen,
+    path: "/student-quiz",
     color: "text-agent-lecturer",
   },
 ];
