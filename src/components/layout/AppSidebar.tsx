@@ -16,7 +16,9 @@ import {
   Building2,
   Ticket,
   MessageSquare,
-  BarChart3
+  BarChart3,
+  CreditCard,
+  Lock
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -80,6 +82,20 @@ const agents = [
     icon: BarChart3,
     path: "/analytics",
     color: "text-purple-500",
+  },
+  {
+    id: "billing",
+    name: "Billing",
+    icon: CreditCard,
+    path: "/billing",
+    color: "text-green-500",
+  },
+  {
+    id: "security",
+    name: "Security",
+    icon: Lock,
+    path: "/security",
+    color: "text-red-500",
   },
 ];
 
