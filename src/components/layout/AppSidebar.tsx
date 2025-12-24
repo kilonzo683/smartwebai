@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -12,7 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
-  LogOut
+  LogOut,
+  Building2,
+  Ticket
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -70,7 +72,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { isAdmin } = useRole();
+  const { isSuperAdmin, isOrgAdmin, isSupportAgent } = useRole();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -130,8 +132,54 @@ export function AppSidebar() {
           );
         })}
 
+        {/* Tickets Link - For support agents */}
+        {(isSupportAgent || isOrgAdmin || isSuperAdmin) && (
+          <NavLink
+            to="/tickets"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+              location.pathname === "/tickets"
+                ? "bg-accent text-foreground"
+                : "text-sidebar-foreground hover:bg-accent/50 hover:text-foreground"
+            )}
+          >
+            <Ticket
+              className={cn(
+                "w-5 h-5 transition-colors",
+                location.pathname === "/tickets" ? "text-orange-500" : "group-hover:text-orange-500"
+              )}
+            />
+            {!collapsed && (
+              <span className="font-medium text-sm">Tickets</span>
+            )}
+          </NavLink>
+        )}
+
+        {/* Organizations Link - For org admins and above */}
+        {(isOrgAdmin || isSuperAdmin) && (
+          <NavLink
+            to="/organizations"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+              location.pathname === "/organizations"
+                ? "bg-accent text-foreground"
+                : "text-sidebar-foreground hover:bg-accent/50 hover:text-foreground"
+            )}
+          >
+            <Building2
+              className={cn(
+                "w-5 h-5 transition-colors",
+                location.pathname === "/organizations" ? "text-blue-500" : "group-hover:text-blue-500"
+              )}
+            />
+            {!collapsed && (
+              <span className="font-medium text-sm">Organizations</span>
+            )}
+          </NavLink>
+        )}
+
         {/* Admin Link - Only visible to admins */}
-        {isAdmin && (
+        {(isSuperAdmin || isOrgAdmin) && (
           <NavLink
             to="/admin"
             className={cn(
