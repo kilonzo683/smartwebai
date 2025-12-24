@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Mail, Lock, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
@@ -20,6 +21,18 @@ export default function Auth() {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, isLoading: authLoading } = useAuth();
+
+  // Get the intended destination from location state, or default to home
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/";
+
+  // Redirect authenticated users away from auth page
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate(from, { replace: true });
+    }
+  }, [user, authLoading, navigate, from]);
 
   const validateInputs = () => {
     const newErrors: { email?: string; password?: string } = {};
