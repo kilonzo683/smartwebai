@@ -21,6 +21,7 @@ import AdminDashboard from "./pages/AdminDashboard";
 import Organizations from "./pages/Organizations";
 import Tickets from "./pages/Tickets";
 import Auth from "./pages/Auth";
+import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/accept-invite" element={<AcceptInvite />} />
                 <Route
                   element={
                     <ProtectedRoute>

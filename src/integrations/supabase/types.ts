@@ -57,8 +57,11 @@ export type Database = {
           action: string
           created_at: string
           details: Json | null
+          entity_name: string | null
           id: string
           ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
           organization_id: string | null
           resource_id: string | null
           resource_type: string
@@ -68,8 +71,11 @@ export type Database = {
           action: string
           created_at?: string
           details?: Json | null
+          entity_name?: string | null
           id?: string
           ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
           organization_id?: string | null
           resource_id?: string | null
           resource_type: string
@@ -79,8 +85,11 @@ export type Database = {
           action?: string
           created_at?: string
           details?: Json | null
+          entity_name?: string | null
           id?: string
           ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
           organization_id?: string | null
           resource_id?: string | null
           resource_type?: string
@@ -374,6 +383,53 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          organization_id: string
+          role: Database["public"]["Enums"]["app_role"]
+          status: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          organization_id: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          organization_id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          status?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_invitations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
