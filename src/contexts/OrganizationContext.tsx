@@ -9,9 +9,13 @@ interface Organization {
   name: string;
   slug: string;
   logo_url: string | null;
-  primary_color: string;
-  subscription_plan: string;
+  primary_color: string | null;
+  subscription_plan: string | null;
   owner_id: string;
+  max_users: number | null;
+  max_agents: number | null;
+  max_messages_per_month: number | null;
+  messages_used: number | null;
 }
 
 interface OrganizationMember {
