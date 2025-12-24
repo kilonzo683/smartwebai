@@ -1,17 +1,26 @@
+import { useCallback, useRef } from "react";
 import { GraduationCap, Upload, FileQuestion, ClipboardCheck, BarChart3, BookOpen } from "lucide-react";
 import { AgentHeader } from "@/components/agents/AgentHeader";
 import { QuickActions } from "@/components/agents/QuickActions";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 
 const quickActions = [
-  { label: "Upload lecture notes", icon: Upload },
-  { label: "Generate a quiz", icon: FileQuestion },
-  { label: "Auto-mark tests", icon: ClipboardCheck },
-  { label: "View student analytics", icon: BarChart3 },
-  { label: "Create summary", icon: BookOpen },
+  { label: "Upload lecture notes", icon: Upload, prompt: "Help me upload and process lecture notes for quiz generation" },
+  { label: "Generate a quiz", icon: FileQuestion, prompt: "Generate a multiple choice quiz based on recent lecture material" },
+  { label: "Auto-mark tests", icon: ClipboardCheck, prompt: "Help me auto-grade the latest batch of student tests" },
+  { label: "View student analytics", icon: BarChart3, prompt: "Show me student performance analytics and weak topic areas" },
+  { label: "Create summary", icon: BookOpen, prompt: "Create a summary of the recent lecture material for students" },
 ];
 
 export default function LecturerAgent() {
+  const quickActionHandler = useRef<((action: string) => void) | null>(null);
+
+  const handleQuickAction = useCallback((prompt: string) => {
+    if (quickActionHandler.current) {
+      quickActionHandler.current(prompt);
+    }
+  }, []);
+
   return (
     <div className="space-y-6">
       <AgentHeader
@@ -26,11 +35,17 @@ export default function LecturerAgent() {
           <ChatInterface
             agentName="Lecturer Assistant"
             agentColor="agent-card-lecturer"
+            agentType="lecturer"
             placeholder="Ask me to generate quizzes, summarize lectures, or track progress..."
+            onQuickAction={(handler) => { quickActionHandler.current = handler; }}
           />
         </div>
         <div className="space-y-6">
-          <QuickActions actions={quickActions} colorClass="text-agent-lecturer" />
+          <QuickActions 
+            actions={quickActions} 
+            colorClass="text-agent-lecturer"
+            onActionClick={handleQuickAction}
+          />
           
           {/* Stats Card */}
           <div className="glass rounded-2xl p-4 animate-slide-up" style={{ animationDelay: "300ms" }}>
