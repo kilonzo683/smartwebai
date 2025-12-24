@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { User, Bell, Shield, Palette, Moon, Sun, LogOut, Loader2, Save, Camera, Upload } from "lucide-react";
+import { User, Bell, Shield, Palette, Moon, Sun, LogOut, Loader2, Save, Camera, Building2, Globe, GraduationCap, Headphones } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +11,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRole } from "@/contexts/RoleContext";
+import { PlatformSettings } from "@/components/settings/PlatformSettings";
+import { OrganizationSettings } from "@/components/settings/OrganizationSettings";
+import { StaffSettings } from "@/components/settings/StaffSettings";
+import { LecturerSettings } from "@/components/settings/LecturerSettings";
+import { SupportAgentSettings } from "@/components/settings/SupportAgentSettings";
+import { EndUserSettings } from "@/components/settings/EndUserSettings";
 
 export default function Settings() {
   const { user } = useAuth();
+  const { userRole, isSuperAdmin, isOrgAdmin, isStaff, isLecturer, isSupportAgent, isLoading: roleLoading } = useRole();
   const [profile, setProfile] = useState<{ full_name: string; avatar_url: string }>({
     full_name: "",
     avatar_url: "",
@@ -38,14 +46,12 @@ export default function Settings() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check theme from localStorage
     const savedTheme = localStorage.getItem("theme") as "light" | "dark" | null;
     if (savedTheme) {
       setTheme(savedTheme);
       document.documentElement.classList.toggle("dark", savedTheme === "dark");
     }
 
-    // Fetch user profile and stats
     const fetchUserData = async () => {
       if (!user) {
         setIsLoading(false);
@@ -53,7 +59,6 @@ export default function Settings() {
       }
 
       try {
-        // Fetch profile
         const { data: profileData } = await supabase
           .from("profiles")
           .select("full_name, avatar_url")
@@ -67,7 +72,6 @@ export default function Settings() {
           });
         }
 
-        // Fetch usage stats
         const [conversationsRes, lectureDocsRes, supportDocsRes, quizzesRes] = await Promise.all([
           supabase.from("conversations").select("id").eq("user_id", user.id),
           supabase.from("lecture_documents").select("id", { count: "exact", head: true }).eq("user_id", user.id),
@@ -75,7 +79,6 @@ export default function Settings() {
           supabase.from("quizzes").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         ]);
 
-        // Get actual message count from conversations
         const conversationIds = conversationsRes.data?.map(c => c.id) || [];
         let messageCount = 0;
         if (conversationIds.length > 0) {
@@ -106,7 +109,6 @@ export default function Settings() {
     const file = event.target.files?.[0];
     if (!file || !user) return;
 
-    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast({
         title: "Invalid file type",
@@ -116,7 +118,6 @@ export default function Settings() {
       return;
     }
 
-    // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast({
         title: "File too large",
@@ -132,19 +133,16 @@ export default function Settings() {
       const fileExt = file.name.split(".").pop();
       const filePath = `${user.id}/avatar.${fileExt}`;
 
-      // Upload to storage
       const { error: uploadError } = await supabase.storage
         .from("avatars")
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
-      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(filePath);
 
-      // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from("profiles")
         .upsert({
@@ -226,7 +224,24 @@ export default function Settings() {
     return email?.charAt(0).toUpperCase() || "U";
   };
 
-  if (isLoading) {
+  const getRoleBadge = () => {
+    const roleLabels: Record<string, { label: string; color: string }> = {
+      super_admin: { label: "Super Admin", color: "bg-red-500/20 text-red-400" },
+      org_admin: { label: "Org Admin", color: "bg-purple-500/20 text-purple-400" },
+      staff: { label: "Staff", color: "bg-blue-500/20 text-blue-400" },
+      lecturer: { label: "Lecturer", color: "bg-green-500/20 text-green-400" },
+      support_agent: { label: "Support Agent", color: "bg-orange-500/20 text-orange-400" },
+      end_user: { label: "User", color: "bg-gray-500/20 text-gray-400" },
+    };
+    const role = roleLabels[userRole || "end_user"];
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${role.color}`}>
+        {role.label}
+      </span>
+    );
+  };
+
+  if (isLoading || roleLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -234,38 +249,79 @@ export default function Settings() {
     );
   }
 
+  // Determine which tabs to show based on role
+  const getTabs = () => {
+    const tabs = [
+      { id: "profile", label: "Profile", icon: User, show: true },
+      { id: "appearance", label: "Appearance", icon: Palette, show: true },
+    ];
+
+    // Super Admin - Platform Settings
+    if (isSuperAdmin) {
+      tabs.push({ id: "platform", label: "Platform", icon: Globe, show: true });
+    }
+
+    // Org Admin - Organization Settings
+    if (isOrgAdmin) {
+      tabs.push({ id: "organization", label: "Organization", icon: Building2, show: true });
+    }
+
+    // Staff - Staff Settings
+    if (isStaff && !isOrgAdmin && !isSuperAdmin) {
+      tabs.push({ id: "staff", label: "Preferences", icon: User, show: true });
+    }
+
+    // Lecturer - Teaching Settings
+    if (isLecturer) {
+      tabs.push({ id: "lecturer", label: "Teaching", icon: GraduationCap, show: true });
+    }
+
+    // Support Agent - Support Settings
+    if (isSupportAgent) {
+      tabs.push({ id: "support", label: "Support", icon: Headphones, show: true });
+    }
+
+    // End User - Minimal Settings
+    if (userRole === "end_user") {
+      tabs.push({ id: "enduser", label: "Preferences", icon: Bell, show: true });
+    }
+
+    // Common tabs for all
+    tabs.push({ id: "notifications", label: "Notifications", icon: Bell, show: true });
+    tabs.push({ id: "security", label: "Security", icon: Shield, show: true });
+
+    return tabs.filter(t => t.show);
+  };
+
+  const tabs = getTabs();
+
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8">
       {/* Header */}
       <div className="animate-slide-up">
-        <h1 className="text-3xl font-bold text-foreground">Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage your account settings and preferences
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+            <p className="text-muted-foreground mt-2">
+              Manage your account settings and preferences
+            </p>
+          </div>
+          {getRoleBadge()}
+        </div>
       </div>
 
       {/* Settings Tabs */}
       <Tabs defaultValue="profile" className="animate-slide-up" style={{ animationDelay: "100ms" }}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-flex">
-          <TabsTrigger value="profile" className="gap-2">
-            <User className="w-4 h-4" />
-            <span className="hidden sm:inline">Profile</span>
-          </TabsTrigger>
-          <TabsTrigger value="appearance" className="gap-2">
-            <Palette className="w-4 h-4" />
-            <span className="hidden sm:inline">Appearance</span>
-          </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
-            <Bell className="w-4 h-4" />
-            <span className="hidden sm:inline">Notifications</span>
-          </TabsTrigger>
-          <TabsTrigger value="security" className="gap-2">
-            <Shield className="w-4 h-4" />
-            <span className="hidden sm:inline">Security</span>
-          </TabsTrigger>
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1">
+          {tabs.map((tab) => (
+            <TabsTrigger key={tab.id} value={tab.id} className="gap-2">
+              <tab.icon className="w-4 h-4" />
+              <span className="hidden sm:inline">{tab.label}</span>
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        {/* Profile Tab */}
+        {/* Profile Tab - All Users */}
         <TabsContent value="profile" className="mt-6">
           <Card className="glass">
             <CardHeader>
@@ -277,7 +333,6 @@ export default function Settings() {
             <CardContent className="space-y-6">
               {user ? (
                 <>
-                  {/* Avatar Upload */}
                   <div className="flex items-center gap-6">
                     <div className="relative">
                       <Avatar className="w-24 h-24">
@@ -363,7 +418,7 @@ export default function Settings() {
           </Card>
         </TabsContent>
 
-        {/* Appearance Tab */}
+        {/* Appearance Tab - All Users */}
         <TabsContent value="appearance" className="mt-6">
           <Card className="glass">
             <CardHeader>
@@ -398,7 +453,49 @@ export default function Settings() {
           </Card>
         </TabsContent>
 
-        {/* Notifications Tab */}
+        {/* Platform Settings - Super Admin Only */}
+        {isSuperAdmin && (
+          <TabsContent value="platform" className="mt-6">
+            <PlatformSettings />
+          </TabsContent>
+        )}
+
+        {/* Organization Settings - Org Admin */}
+        {isOrgAdmin && (
+          <TabsContent value="organization" className="mt-6">
+            <OrganizationSettings />
+          </TabsContent>
+        )}
+
+        {/* Staff Settings */}
+        {isStaff && !isOrgAdmin && !isSuperAdmin && (
+          <TabsContent value="staff" className="mt-6">
+            <StaffSettings />
+          </TabsContent>
+        )}
+
+        {/* Lecturer Settings */}
+        {isLecturer && (
+          <TabsContent value="lecturer" className="mt-6">
+            <LecturerSettings />
+          </TabsContent>
+        )}
+
+        {/* Support Agent Settings */}
+        {isSupportAgent && (
+          <TabsContent value="support" className="mt-6">
+            <SupportAgentSettings />
+          </TabsContent>
+        )}
+
+        {/* End User Settings */}
+        {userRole === "end_user" && (
+          <TabsContent value="enduser" className="mt-6">
+            <EndUserSettings />
+          </TabsContent>
+        )}
+
+        {/* Notifications Tab - All Users */}
         <TabsContent value="notifications" className="mt-6">
           <Card className="glass">
             <CardHeader>
@@ -456,7 +553,7 @@ export default function Settings() {
           </Card>
         </TabsContent>
 
-        {/* Security Tab */}
+        {/* Security Tab - All Users */}
         <TabsContent value="security" className="mt-6">
           <Card className="glass">
             <CardHeader>
@@ -498,7 +595,7 @@ export default function Settings() {
         </TabsContent>
       </Tabs>
 
-      {/* Usage Stats */}
+      {/* Usage Stats - All Users */}
       <Card className="glass animate-slide-up" style={{ animationDelay: "200ms" }}>
         <CardHeader>
           <CardTitle>Usage Overview</CardTitle>
