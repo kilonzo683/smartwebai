@@ -2,21 +2,30 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Loader2, Users, Shield, UserCheck } from "lucide-react";
-import { format } from "date-fns";
+import { Loader2, Users } from "lucide-react";
+
+type AppRole = "super_admin" | "org_admin" | "staff" | "lecturer" | "support_agent" | "end_user";
 
 interface UserWithRole {
   id: string;
   email: string;
   created_at: string;
   last_sign_in_at: string | null;
-  role: string;
+  role: AppRole;
   profile_name: string | null;
 }
+
+const roleLabels: Record<AppRole, string> = {
+  super_admin: "Super Admin",
+  org_admin: "Org Admin",
+  staff: "Staff",
+  lecturer: "Lecturer",
+  support_agent: "Support Agent",
+  end_user: "End User",
+};
 
 export function UserManagement() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
@@ -55,7 +64,7 @@ export function UserManagement() {
           email: userId === currentUser?.id ? currentUser.email || "Unknown" : `User ${userId.slice(0, 8)}...`,
           created_at: new Date().toISOString(),
           last_sign_in_at: null,
-          role: roleData.role as "admin" | "moderator" | "user",
+          role: roleData.role as AppRole,
           profile_name: profilesMap.get(userId) || null,
         });
       }
@@ -77,7 +86,7 @@ export function UserManagement() {
     fetchUsers();
   }, []);
 
-  const handleRoleChange = async (userId: string, newRole: "admin" | "moderator" | "user") => {
+  const handleRoleChange = async (userId: string, newRole: AppRole) => {
     setUpdatingUserId(userId);
     try {
       const { error } = await supabase
@@ -93,7 +102,7 @@ export function UserManagement() {
 
       toast({
         title: "Role updated",
-        description: `User role changed to ${newRole}`,
+        description: `User role changed to ${roleLabels[newRole]}`,
       });
     } catch (error) {
       console.error("Error updating role:", error);
@@ -107,14 +116,18 @@ export function UserManagement() {
     }
   };
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (role: AppRole) => {
     switch (role) {
-      case "admin":
+      case "super_admin":
         return "destructive";
-      case "moderator":
+      case "org_admin":
         return "default";
-      default:
+      case "staff":
+      case "lecturer":
+      case "support_agent":
         return "secondary";
+      default:
+        return "outline";
     }
   };
 
@@ -143,12 +156,12 @@ export function UserManagement() {
             <p className="text-xs text-muted-foreground">Total Users</p>
           </div>
           <div className="p-4 rounded-lg bg-accent/30 text-center">
-            <p className="text-2xl font-bold">{users.filter(u => u.role === "admin").length}</p>
+            <p className="text-2xl font-bold">{users.filter(u => u.role === "super_admin" || u.role === "org_admin").length}</p>
             <p className="text-xs text-muted-foreground">Admins</p>
           </div>
           <div className="p-4 rounded-lg bg-accent/30 text-center">
-            <p className="text-2xl font-bold">{users.filter(u => u.role === "moderator").length}</p>
-            <p className="text-xs text-muted-foreground">Moderators</p>
+            <p className="text-2xl font-bold">{users.filter(u => u.role === "staff" || u.role === "lecturer" || u.role === "support_agent").length}</p>
+            <p className="text-xs text-muted-foreground">Staff</p>
           </div>
         </div>
 
@@ -179,16 +192,16 @@ export function UserManagement() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={getRoleBadgeVariant(user.role)}>
-                        {user.role}
+                        {roleLabels[user.role]}
                       </Badge>
                     </TableCell>
                     <TableCell>
                       <Select
                         value={user.role}
-                        onValueChange={(value) => handleRoleChange(user.id, value as "admin" | "moderator" | "user")}
+                        onValueChange={(value) => handleRoleChange(user.id, value as AppRole)}
                         disabled={updatingUserId === user.id}
                       >
-                        <SelectTrigger className="w-32">
+                        <SelectTrigger className="w-36">
                           {updatingUserId === user.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
@@ -196,9 +209,12 @@ export function UserManagement() {
                           )}
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="moderator">Moderator</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
+                          <SelectItem value="end_user">End User</SelectItem>
+                          <SelectItem value="support_agent">Support Agent</SelectItem>
+                          <SelectItem value="lecturer">Lecturer</SelectItem>
+                          <SelectItem value="staff">Staff</SelectItem>
+                          <SelectItem value="org_admin">Org Admin</SelectItem>
+                          <SelectItem value="super_admin">Super Admin</SelectItem>
                         </SelectContent>
                       </Select>
                     </TableCell>

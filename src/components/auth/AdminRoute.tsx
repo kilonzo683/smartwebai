@@ -11,7 +11,7 @@ interface AdminRouteProps {
 
 export function AdminRoute({ children }: AdminRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
-  const { isAdmin, isLoading: roleLoading } = useRole();
+  const { isSuperAdmin, isOrgAdmin, isLoading: roleLoading } = useRole();
   const navigate = useNavigate();
 
   if (authLoading || roleLoading) {
@@ -26,7 +26,7 @@ export function AdminRoute({ children }: AdminRouteProps) {
     return <Navigate to="/auth" replace />;
   }
 
-  if (!isAdmin) {
+  if (!isSuperAdmin && !isOrgAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <div className="text-center max-w-md">
