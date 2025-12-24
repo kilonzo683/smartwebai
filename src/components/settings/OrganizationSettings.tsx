@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, Mail, MessageSquare, Share2, Palette, Zap, Bell, Shield, CreditCard, Save, Loader2, TestTube } from "lucide-react";
+import { Building2, Mail, MessageSquare, Share2, Palette, Zap, Bell, Shield, Save, Loader2, TestTube } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { toast } from "sonner";
 import type { Json } from "@/integrations/supabase/types";
+import { SocialMediaConnections } from "./SocialMediaConnections";
 
 interface OrgProfile {
   name: string;
@@ -242,7 +243,7 @@ export function OrganizationSettings() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8">
+        <TabsList className="flex flex-wrap gap-1 h-auto p-1">
           <TabsTrigger value="profile" className="gap-1">
             <Building2 className="w-4 h-4" />
             <span className="hidden lg:inline">Profile</span>
@@ -258,6 +259,10 @@ export function OrganizationSettings() {
           <TabsTrigger value="whatsapp" className="gap-1">
             <MessageSquare className="w-4 h-4" />
             <span className="hidden lg:inline">WhatsApp</span>
+          </TabsTrigger>
+          <TabsTrigger value="social" className="gap-1">
+            <Share2 className="w-4 h-4" />
+            <span className="hidden lg:inline">Social</span>
           </TabsTrigger>
           <TabsTrigger value="brand" className="gap-1">
             <Palette className="w-4 h-4" />
@@ -550,6 +555,11 @@ export function OrganizationSettings() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Social Media Connections */}
+        <TabsContent value="social" className="space-y-4">
+          <SocialMediaConnections />
         </TabsContent>
 
         {/* Brand Voice (PRO) */}
