@@ -52,6 +52,100 @@ export type Database = {
           },
         ]
       }
+      agent_performance: {
+        Row: {
+          agent_type: string
+          avg_confidence_score: number | null
+          avg_response_time_seconds: number | null
+          avg_satisfaction_score: number | null
+          created_at: string
+          date: string
+          escalated_conversations: number | null
+          id: string
+          organization_id: string
+          resolved_conversations: number | null
+          total_conversations: number | null
+          total_messages: number | null
+        }
+        Insert: {
+          agent_type: string
+          avg_confidence_score?: number | null
+          avg_response_time_seconds?: number | null
+          avg_satisfaction_score?: number | null
+          created_at?: string
+          date: string
+          escalated_conversations?: number | null
+          id?: string
+          organization_id: string
+          resolved_conversations?: number | null
+          total_conversations?: number | null
+          total_messages?: number | null
+        }
+        Update: {
+          agent_type?: string
+          avg_confidence_score?: number | null
+          avg_response_time_seconds?: number | null
+          avg_satisfaction_score?: number | null
+          created_at?: string
+          date?: string
+          escalated_conversations?: number | null
+          id?: string
+          organization_id?: string
+          resolved_conversations?: number | null
+          total_conversations?: number | null
+          total_messages?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_performance_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics_events: {
+        Row: {
+          agent_type: string | null
+          channel: string | null
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          organization_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          agent_type?: string | null
+          channel?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          agent_type?: string | null
+          channel?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -98,6 +192,98 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "audit_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_routing_rules: {
+        Row: {
+          agent_type: string
+          channel_id: string
+          conditions: Json | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          organization_id: string
+          priority: number | null
+        }
+        Insert: {
+          agent_type: string
+          channel_id: string
+          conditions?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          organization_id: string
+          priority?: number | null
+        }
+        Update: {
+          agent_type?: string
+          channel_id?: string
+          conditions?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string
+          priority?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_routing_rules_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "communication_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_routing_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      communication_channels: {
+        Row: {
+          channel_type: string
+          config: Json | null
+          created_at: string
+          credentials: Json | null
+          id: string
+          is_enabled: boolean | null
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          channel_type: string
+          config?: Json | null
+          created_at?: string
+          credentials?: Json | null
+          id?: string
+          is_enabled?: boolean | null
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          channel_type?: string
+          config?: Json | null
+          created_at?: string
+          credentials?: Json | null
+          id?: string
+          is_enabled?: boolean | null
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_channels_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -383,6 +569,50 @@ export type Database = {
             columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string
+          data: Json | null
+          id: string
+          is_read: boolean | null
+          message: string | null
+          organization_id: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          organization_id?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          organization_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

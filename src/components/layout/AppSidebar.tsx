@@ -14,7 +14,9 @@ import {
   Sparkles,
   LogOut,
   Building2,
-  Ticket
+  Ticket,
+  MessageSquare,
+  BarChart3
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -64,6 +66,20 @@ const agents = [
     icon: BookOpen,
     path: "/student-quiz",
     color: "text-agent-lecturer",
+  },
+  {
+    id: "channels",
+    name: "Channels",
+    icon: MessageSquare,
+    path: "/channels",
+    color: "text-cyan-500",
+  },
+  {
+    id: "analytics",
+    name: "Analytics",
+    icon: BarChart3,
+    path: "/analytics",
+    color: "text-purple-500",
   },
 ];
 
