@@ -69,17 +69,28 @@ export default function Settings() {
 
         // Fetch usage stats
         const [conversationsRes, lectureDocsRes, supportDocsRes, quizzesRes] = await Promise.all([
-          supabase.from("conversations").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+          supabase.from("conversations").select("id").eq("user_id", user.id),
           supabase.from("lecture_documents").select("id", { count: "exact", head: true }).eq("user_id", user.id),
           supabase.from("support_documents").select("id", { count: "exact", head: true }).eq("user_id", user.id),
           supabase.from("quizzes").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         ]);
 
+        // Get actual message count from conversations
+        const conversationIds = conversationsRes.data?.map(c => c.id) || [];
+        let messageCount = 0;
+        if (conversationIds.length > 0) {
+          const { count } = await supabase
+            .from("messages")
+            .select("id", { count: "exact", head: true })
+            .in("conversation_id", conversationIds);
+          messageCount = count || 0;
+        }
+
         setUsageStats({
-          conversations: conversationsRes.count || 0,
+          conversations: conversationsRes.data?.length || 0,
           documents: (lectureDocsRes.count || 0) + (supportDocsRes.count || 0),
           quizzes: quizzesRes.count || 0,
-          messages: (conversationsRes.count || 0) * 5, // Estimate
+          messages: messageCount,
         });
       } catch (error) {
         console.error("Error fetching user data:", error);

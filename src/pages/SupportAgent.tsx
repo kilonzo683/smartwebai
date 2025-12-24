@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { HeadphonesIcon, MessageSquare, Upload, AlertTriangle, BarChart3, Users } from "lucide-react";
 import { AgentHeader } from "@/components/agents/AgentHeader";
 import { QuickActions } from "@/components/agents/QuickActions";
@@ -6,6 +6,8 @@ import { ChatInterface } from "@/components/chat/ChatInterface";
 import { KnowledgeBaseLibrary } from "@/components/support/KnowledgeBaseLibrary";
 import { SupportFileUpload } from "@/components/support/SupportFileUpload";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useOrganization } from "@/contexts/OrganizationContext";
 
 interface Document {
   id: string;
@@ -28,6 +30,33 @@ export default function SupportAgent() {
   const quickActionHandler = useRef<((action: string) => void) | null>(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const { currentOrg } = useOrganization();
+  const [stats, setStats] = useState({ openTickets: 0, resolvedToday: 0, kbDocs: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!currentOrg) return;
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const [openTicketsRes, resolvedTodayRes, kbDocsRes] = await Promise.all([
+        supabase.from("escalation_tickets").select("id", { count: "exact", head: true })
+          .eq("organization_id", currentOrg.id).in("status", ["open", "in_progress"]),
+        supabase.from("escalation_tickets").select("id", { count: "exact", head: true })
+          .eq("organization_id", currentOrg.id).eq("status", "resolved").gte("resolved_at", today.toISOString()),
+        supabase.from("knowledge_base").select("id", { count: "exact", head: true })
+          .eq("organization_id", currentOrg.id).eq("is_active", true),
+      ]);
+
+      setStats({
+        openTickets: openTicketsRes.count || 0,
+        resolvedToday: resolvedTodayRes.count || 0,
+        kbDocs: kbDocsRes.count || 0,
+      });
+    };
+    fetchStats();
+  }, [currentOrg, refreshKey]);
 
   const handleQuickAction = useCallback((prompt: string) => {
     if (prompt === "__UPLOAD_KB__") {
@@ -116,15 +145,15 @@ export default function SupportAgent() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-foreground">Open Tickets</span>
-                <span className="text-sm font-semibold text-agent-support">8</span>
+                <span className="text-sm font-semibold text-agent-support">{stats.openTickets}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-foreground">Resolved Today</span>
-                <span className="text-sm font-semibold text-agent-support">34</span>
+                <span className="text-sm font-semibold text-agent-support">{stats.resolvedToday}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-foreground">Satisfaction Rate</span>
-                <span className="text-sm font-semibold text-agent-support">96%</span>
+                <span className="text-sm text-foreground">KB Documents</span>
+                <span className="text-sm font-semibold text-agent-support">{stats.kbDocs}</span>
               </div>
             </div>
           </div>
