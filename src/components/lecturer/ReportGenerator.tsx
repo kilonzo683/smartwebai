@@ -173,7 +173,7 @@ export function ReportGenerator() {
           user_id: user.id,
           title: formData.title,
           report_type: formData.report_type,
-          content,
+          content: content as unknown as import("@/integrations/supabase/types").Json,
           quiz_id: formData.quiz_id || null,
         }]);
 
