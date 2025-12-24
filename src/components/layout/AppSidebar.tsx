@@ -18,7 +18,8 @@ import {
   MessageSquare,
   BarChart3,
   CreditCard,
-  Lock
+  Lock,
+  Crown
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -229,6 +230,29 @@ export function AppSidebar() {
             />
             {!collapsed && (
               <span className="font-medium text-sm">Admin</span>
+            )}
+          </NavLink>
+        )}
+
+        {/* Roles & Permissions - Super Admin only */}
+        {isSuperAdmin && (
+          <NavLink
+            to="/roles-permissions"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+              location.pathname === "/roles-permissions"
+                ? "bg-accent text-foreground"
+                : "text-sidebar-foreground hover:bg-accent/50 hover:text-foreground"
+            )}
+          >
+            <Crown
+              className={cn(
+                "w-5 h-5 transition-colors",
+                location.pathname === "/roles-permissions" ? "text-yellow-500" : "group-hover:text-yellow-500"
+              )}
+            />
+            {!collapsed && (
+              <span className="font-medium text-sm">Roles & Permissions</span>
             )}
           </NavLink>
         )}
