@@ -4,9 +4,18 @@ import { AgentHeader } from "@/components/agents/AgentHeader";
 import { QuickActions } from "@/components/agents/QuickActions";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { FileUpload } from "@/components/chat/FileUpload";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { DocumentLibrary } from "@/components/lecturer/DocumentLibrary";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+interface Document {
+  id: string;
+  file_name: string;
+  file_size: number | null;
+  content_type: string | null;
+  created_at: string;
+  extracted_text: string | null;
+}
 
 const quickActions = [
   { label: "Upload lecture notes", icon: Upload, prompt: "__UPLOAD_DOCUMENT__" },
@@ -20,6 +29,7 @@ export default function LecturerAgent() {
   const quickActionHandler = useRef<((action: string) => void) | null>(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadMode, setUploadMode] = useState<"extract" | "quiz">("extract");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleQuickAction = useCallback((prompt: string) => {
     if (prompt === "__UPLOAD_DOCUMENT__") {
@@ -39,12 +49,28 @@ export default function LecturerAgent() {
 
   const handleFileProcessed = useCallback((result: { fileName: string; content?: string; quiz?: string }) => {
     setUploadDialogOpen(false);
+    setRefreshKey(prev => prev + 1); // Refresh document library
     
     if (result.quiz && quickActionHandler.current) {
-      // Send the quiz content to the chat
       quickActionHandler.current(`I've generated a quiz from "${result.fileName}":\n\n${result.quiz}`);
     } else if (result.content && quickActionHandler.current) {
       quickActionHandler.current(`I've uploaded "${result.fileName}". The document has been processed and saved. What would you like me to do with it? I can:\n\n• Generate quiz questions\n• Create a summary\n• Identify key concepts\n• Create study notes`);
+    }
+  }, []);
+
+  const handleGenerateQuizFromDoc = useCallback((doc: Document) => {
+    if (quickActionHandler.current && doc.extracted_text) {
+      quickActionHandler.current(`Generate a multiple choice quiz based on this document "${doc.file_name}":\n\nContent:\n${doc.extracted_text.slice(0, 5000)}`);
+    } else if (quickActionHandler.current) {
+      quickActionHandler.current(`Please generate a quiz from the document "${doc.file_name}". I'll need you to help me extract key concepts and create questions.`);
+    }
+  }, []);
+
+  const handleCreateSummaryFromDoc = useCallback((doc: Document) => {
+    if (quickActionHandler.current && doc.extracted_text) {
+      quickActionHandler.current(`Create a comprehensive summary of this document "${doc.file_name}":\n\nContent:\n${doc.extracted_text.slice(0, 5000)}`);
+    } else if (quickActionHandler.current) {
+      quickActionHandler.current(`Please create a summary of the document "${doc.file_name}". Include the main topics, key points, and important concepts.`);
     }
   }, []);
 
@@ -72,6 +98,13 @@ export default function LecturerAgent() {
             actions={quickActions} 
             colorClass="text-agent-lecturer"
             onActionClick={handleQuickAction}
+          />
+          
+          {/* Document Library */}
+          <DocumentLibrary
+            key={refreshKey}
+            onGenerateQuiz={handleGenerateQuizFromDoc}
+            onCreateSummary={handleCreateSummaryFromDoc}
           />
           
           {/* Upload Dialog */}
