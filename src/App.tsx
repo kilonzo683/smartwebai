@@ -20,6 +20,8 @@ import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/AdminDashboard";
 import Organizations from "./pages/Organizations";
 import Tickets from "./pages/Tickets";
+import Channels from "./pages/Channels";
+import Analytics from "./pages/Analytics";
 import Auth from "./pages/Auth";
 import AcceptInvite from "./pages/AcceptInvite";
 import NotFound from "./pages/NotFound";
@@ -54,6 +56,8 @@ const App = () => (
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/organizations" element={<Organizations />} />
                   <Route path="/tickets" element={<Tickets />} />
+                  <Route path="/channels" element={<Channels />} />
+                  <Route path="/analytics" element={<Analytics />} />
                   <Route
                     path="/admin"
                     element={
