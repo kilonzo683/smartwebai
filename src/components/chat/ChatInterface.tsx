@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Send, Paperclip, Mic, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
@@ -10,16 +11,24 @@ interface Message {
   timestamp: Date;
 }
 
+type AgentType = "secretary" | "support" | "social" | "lecturer";
+
 interface ChatInterfaceProps {
   agentName: string;
   agentColor: string;
+  agentType: AgentType;
   placeholder?: string;
+  onQuickAction?: (handler: (action: string) => void) => void;
 }
+
+const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
 
 export function ChatInterface({
   agentName,
   agentColor,
+  agentType,
   placeholder = "Type your message...",
+  onQuickAction,
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -30,7 +39,7 @@ export function ChatInterface({
     },
   ]);
   const [input, setInput] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -41,31 +50,135 @@ export function ChatInterface({
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  // Expose quick action handler
+  useEffect(() => {
+    if (onQuickAction) {
+      onQuickAction((action: string) => {
+        handleSend(action);
+      });
+    }
+  }, [onQuickAction]);
+
+  const handleSend = async (messageContent?: string) => {
+    const content = messageContent || input;
+    if (!content.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: input,
+      content,
       role: "user",
       timestamp: new Date(),
     };
 
     setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setIsTyping(true);
+    if (!messageContent) setInput("");
+    setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage: Message = {
+    let assistantContent = "";
+
+    try {
+      const allMessages = [...messages, userMessage];
+      
+      const response = await fetch(CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          messages: allMessages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+          agentType,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Request failed with status ${response.status}`);
+      }
+
+      if (!response.body) {
+        throw new Error("No response body");
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let textBuffer = "";
+
+      // Create the assistant message placeholder
+      const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `I understand you're asking about "${input}". Let me help you with that. This is a demo response - connect to Cloud to enable real AI functionality.`,
+        content: "",
         role: "assistant",
         timestamp: new Date(),
       };
-      setMessages((prev) => [...prev, aiMessage]);
-      setIsTyping(false);
-    }, 1500);
+      setMessages((prev) => [...prev, assistantMessage]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        textBuffer += decoder.decode(value, { stream: true });
+
+        let newlineIndex: number;
+        while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
+          let line = textBuffer.slice(0, newlineIndex);
+          textBuffer = textBuffer.slice(newlineIndex + 1);
+
+          if (line.endsWith("\r")) line = line.slice(0, -1);
+          if (line.startsWith(":") || line.trim() === "") continue;
+          if (!line.startsWith("data: ")) continue;
+
+          const jsonStr = line.slice(6).trim();
+          if (jsonStr === "[DONE]") break;
+
+          try {
+            const parsed = JSON.parse(jsonStr);
+            const delta = parsed.choices?.[0]?.delta?.content;
+            if (delta) {
+              assistantContent += delta;
+              setMessages((prev) => {
+                const updated = [...prev];
+                const lastIdx = updated.length - 1;
+                if (updated[lastIdx]?.role === "assistant") {
+                  updated[lastIdx] = { ...updated[lastIdx], content: assistantContent };
+                }
+                return updated;
+              });
+            }
+          } catch {
+            textBuffer = line + "\n" + textBuffer;
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to get response",
+        variant: "destructive",
+      });
+      setMessages((prev) => prev.filter((m) => m.content !== "" || m.role !== "assistant"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAttachment = () => {
+    toast({
+      title: "Coming Soon",
+      description: "File attachments will be available in the next update.",
+    });
+  };
+
+  const handleVoice = () => {
+    toast({
+      title: "Coming Soon",
+      description: "Voice input will be available in the next update.",
+    });
   };
 
   return (
@@ -82,7 +195,9 @@ export function ChatInterface({
         </div>
         <div>
           <h3 className="font-semibold text-foreground">{agentName}</h3>
-          <p className="text-xs text-muted-foreground">Online • Ready to help</p>
+          <p className="text-xs text-muted-foreground">
+            {isLoading ? "Typing..." : "Online • Ready to help"}
+          </p>
         </div>
       </div>
 
@@ -104,7 +219,7 @@ export function ChatInterface({
                   : "bg-accent text-foreground rounded-bl-md"
               )}
             >
-              <p className="text-sm">{message.content}</p>
+              <p className="text-sm whitespace-pre-wrap">{message.content}</p>
               <p
                 className={cn(
                   "text-xs mt-1",
@@ -122,7 +237,7 @@ export function ChatInterface({
           </div>
         ))}
 
-        {isTyping && (
+        {isLoading && messages[messages.length - 1]?.role !== "assistant" && (
           <div className="flex justify-start animate-fade-in">
             <div className="bg-accent rounded-2xl rounded-bl-md px-4 py-3">
               <div className="flex gap-1">
@@ -146,7 +261,12 @@ export function ChatInterface({
       {/* Input */}
       <div className="p-4 border-t border-border">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="flex-shrink-0">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="flex-shrink-0"
+            onClick={handleAttachment}
+          >
             <Paperclip className="w-5 h-5 text-muted-foreground" />
           </Button>
           <div className="flex-1 relative">
@@ -154,17 +274,23 @@ export function ChatInterface({
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
               placeholder={placeholder}
-              className="w-full bg-accent rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              disabled={isLoading}
+              className="w-full bg-accent rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
             />
           </div>
-          <Button variant="ghost" size="icon" className="flex-shrink-0">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="flex-shrink-0"
+            onClick={handleVoice}
+          >
             <Mic className="w-5 h-5 text-muted-foreground" />
           </Button>
           <Button
-            onClick={handleSend}
-            disabled={!input.trim()}
+            onClick={() => handleSend()}
+            disabled={!input.trim() || isLoading}
             className={cn("flex-shrink-0", agentColor)}
           >
             <Send className="w-4 h-4" />
