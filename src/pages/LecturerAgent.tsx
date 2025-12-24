@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { GraduationCap, Upload, FileQuestion, ClipboardCheck, BarChart3, BookOpen } from "lucide-react";
 import { AgentHeader } from "@/components/agents/AgentHeader";
 import { QuickActions } from "@/components/agents/QuickActions";
@@ -7,6 +7,8 @@ import { FileUpload } from "@/components/chat/FileUpload";
 import { DocumentLibrary } from "@/components/lecturer/DocumentLibrary";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Document {
   id: string;
@@ -30,6 +32,27 @@ export default function LecturerAgent() {
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploadMode, setUploadMode] = useState<"extract" | "quiz">("extract");
   const [refreshKey, setRefreshKey] = useState(0);
+  const { user } = useAuth();
+  const [stats, setStats] = useState({ quizzes: 0, documents: 0, attempts: 0 });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!user) return;
+      
+      const [quizzesRes, docsRes, attemptsRes] = await Promise.all([
+        supabase.from("quizzes").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("lecture_documents").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("quiz_attempts").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+      ]);
+
+      setStats({
+        quizzes: quizzesRes.count || 0,
+        documents: docsRes.count || 0,
+        attempts: attemptsRes.count || 0,
+      });
+    };
+    fetchStats();
+  }, [user, refreshKey]);
 
   const handleQuickAction = useCallback((prompt: string) => {
     if (prompt === "__UPLOAD_DOCUMENT__") {
@@ -151,15 +174,15 @@ export default function LecturerAgent() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-foreground">Quizzes Created</span>
-                <span className="text-sm font-semibold text-agent-lecturer">24</span>
+                <span className="text-sm font-semibold text-agent-lecturer">{stats.quizzes}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-foreground">Tests Auto-Graded</span>
-                <span className="text-sm font-semibold text-agent-lecturer">156</span>
+                <span className="text-sm text-foreground">Documents</span>
+                <span className="text-sm font-semibold text-agent-lecturer">{stats.documents}</span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-foreground">Avg Student Score</span>
-                <span className="text-sm font-semibold text-agent-lecturer">78%</span>
+                <span className="text-sm text-foreground">Quiz Attempts</span>
+                <span className="text-sm font-semibold text-agent-lecturer">{stats.attempts}</span>
               </div>
             </div>
           </div>

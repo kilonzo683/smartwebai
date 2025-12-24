@@ -43,7 +43,7 @@ export default function Dashboard() {
       // Fetch conversation counts by agent type
       const { data: conversations } = await supabase
         .from("conversations")
-        .select("agent_type")
+        .select("id, agent_type")
         .eq("user_id", user.id);
 
       const conversationCounts = {
@@ -52,6 +52,22 @@ export default function Dashboard() {
         social: conversations?.filter(c => c.agent_type === "social").length || 0,
         lecturer: conversations?.filter(c => c.agent_type === "lecturer").length || 0,
       };
+
+      // Get actual message counts per agent type
+      const secretaryConvIds = conversations?.filter(c => c.agent_type === "secretary").map(c => c.id) || [];
+      const socialConvIds = conversations?.filter(c => c.agent_type === "social").map(c => c.id) || [];
+
+      let secretaryMessages = 0;
+      let socialMessages = 0;
+
+      if (secretaryConvIds.length > 0) {
+        const { count } = await supabase.from("messages").select("id", { count: "exact", head: true }).in("conversation_id", secretaryConvIds);
+        secretaryMessages = count || 0;
+      }
+      if (socialConvIds.length > 0) {
+        const { count } = await supabase.from("messages").select("id", { count: "exact", head: true }).in("conversation_id", socialConvIds);
+        socialMessages = count || 0;
+      }
 
       // Fetch quizzes count
       const { count: quizCount } = await supabase
@@ -72,9 +88,9 @@ export default function Dashboard() {
         .eq("user_id", user.id);
 
       setStats({
-        secretary: { conversations: conversationCounts.secretary, messages: conversationCounts.secretary * 5 },
+        secretary: { conversations: conversationCounts.secretary, messages: secretaryMessages },
         support: { conversations: conversationCounts.support, documents: supportDocsCount || 0 },
-        social: { conversations: conversationCounts.social, messages: conversationCounts.social * 3 },
+        social: { conversations: conversationCounts.social, messages: socialMessages },
         lecturer: { quizzes: quizCount || 0, documents: lectureDocsCount || 0 },
       });
     };
