@@ -1,8 +1,9 @@
-import { Shield, History, Lock } from "lucide-react";
+import { Shield, History, Lock, Database } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SecurityDashboard } from "@/components/security/SecurityDashboard";
 import { AuditLogViewer } from "@/components/security/AuditLogViewer";
 import { DataPrivacy } from "@/components/security/DataPrivacy";
+import { BackupManager } from "@/components/backup/BackupManager";
 
 export default function Security() {
   return (
@@ -26,11 +27,15 @@ export default function Security() {
               <History className="h-4 w-4" />
               Audit Trail
             </TabsTrigger>
-            <TabsTrigger value="privacy" className="flex items-center gap-2">
-              <Lock className="h-4 w-4" />
-              Data Privacy
-            </TabsTrigger>
-          </TabsList>
+          <TabsTrigger value="privacy" className="flex items-center gap-2">
+            <Lock className="h-4 w-4" />
+            Data Privacy
+          </TabsTrigger>
+          <TabsTrigger value="backup" className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            Backup & Recovery
+          </TabsTrigger>
+        </TabsList>
 
           <TabsContent value="overview">
             <SecurityDashboard />
@@ -40,9 +45,13 @@ export default function Security() {
             <AuditLogViewer />
           </TabsContent>
 
-          <TabsContent value="privacy">
-            <DataPrivacy />
-          </TabsContent>
+        <TabsContent value="privacy">
+          <DataPrivacy />
+        </TabsContent>
+
+        <TabsContent value="backup">
+          <BackupManager />
+        </TabsContent>
       </Tabs>
     </div>
   );

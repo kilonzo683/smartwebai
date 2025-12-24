@@ -199,6 +199,53 @@ export type Database = {
           },
         ]
       }
+      backup_settings: {
+        Row: {
+          created_at: string
+          frequency: string | null
+          id: string
+          is_enabled: boolean | null
+          last_backup_at: string | null
+          next_backup_at: string | null
+          organization_id: string
+          retention_days: number | null
+          tables_to_backup: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          frequency?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_backup_at?: string | null
+          next_backup_at?: string | null
+          organization_id: string
+          retention_days?: number | null
+          tables_to_backup?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          frequency?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          last_backup_at?: string | null
+          next_backup_at?: string | null
+          organization_id?: string
+          retention_days?: number | null
+          tables_to_backup?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_routing_rules: {
         Row: {
           agent_type: string
@@ -341,6 +388,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      database_backups: {
+        Row: {
+          backup_name: string
+          backup_type: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          error_message: string | null
+          file_path: string | null
+          file_size: number | null
+          id: string
+          organization_id: string
+          records_count: number | null
+          started_at: string | null
+          status: string
+          tables_included: string[] | null
+        }
+        Insert: {
+          backup_name: string
+          backup_type?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          organization_id: string
+          records_count?: number | null
+          started_at?: string | null
+          status?: string
+          tables_included?: string[] | null
+        }
+        Update: {
+          backup_name?: string
+          backup_type?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          error_message?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          organization_id?: string
+          records_count?: number | null
+          started_at?: string | null
+          status?: string
+          tables_included?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "database_backups_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       escalation_tickets: {
         Row: {
