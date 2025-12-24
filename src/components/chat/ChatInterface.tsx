@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Paperclip, Mic, Sparkles } from "lucide-react";
+import { Send, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
@@ -167,20 +167,6 @@ export function ChatInterface({
     }
   };
 
-  const handleAttachment = () => {
-    toast({
-      title: "Coming Soon",
-      description: "File attachments will be available in the next update.",
-    });
-  };
-
-  const handleVoice = () => {
-    toast({
-      title: "Coming Soon",
-      description: "Voice input will be available in the next update.",
-    });
-  };
-
   return (
     <div className="flex flex-col h-[calc(100vh-12rem)] glass rounded-2xl overflow-hidden">
       {/* Chat Header */}
@@ -261,14 +247,6 @@ export function ChatInterface({
       {/* Input */}
       <div className="p-4 border-t border-border">
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="flex-shrink-0"
-            onClick={handleAttachment}
-          >
-            <Paperclip className="w-5 h-5 text-muted-foreground" />
-          </Button>
           <div className="flex-1 relative">
             <input
               type="text"
@@ -280,14 +258,6 @@ export function ChatInterface({
               className="w-full bg-accent rounded-xl px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
             />
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="flex-shrink-0"
-            onClick={handleVoice}
-          >
-            <Mic className="w-5 h-5 text-muted-foreground" />
-          </Button>
           <Button
             onClick={() => handleSend()}
             disabled={!input.trim() || isLoading}
