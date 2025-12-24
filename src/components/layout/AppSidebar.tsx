@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -8,6 +8,7 @@ import {
   GraduationCap,
   BookOpen,
   Settings,
+  Shield,
   ChevronLeft,
   ChevronRight,
   Sparkles,
@@ -17,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useRole } from "@/contexts/RoleContext";
 
 const agents = [
   {
@@ -68,6 +70,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAdmin } = useRole();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -126,6 +129,29 @@ export function AppSidebar() {
             </NavLink>
           );
         })}
+
+        {/* Admin Link - Only visible to admins */}
+        {isAdmin && (
+          <NavLink
+            to="/admin"
+            className={cn(
+              "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
+              location.pathname === "/admin"
+                ? "bg-accent text-foreground"
+                : "text-sidebar-foreground hover:bg-accent/50 hover:text-foreground"
+            )}
+          >
+            <Shield
+              className={cn(
+                "w-5 h-5 transition-colors",
+                location.pathname === "/admin" ? "text-destructive" : "group-hover:text-destructive"
+              )}
+            />
+            {!collapsed && (
+              <span className="font-medium text-sm">Admin</span>
+            )}
+          </NavLink>
+        )}
       </nav>
 
       {/* Footer */}
