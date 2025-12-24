@@ -99,24 +99,48 @@ export type Database = {
       conversations: {
         Row: {
           agent_type: string
+          confidence_score: number | null
           created_at: string
+          customer_satisfaction: number | null
+          escalation_reason: string | null
           id: string
+          is_escalated: boolean | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          sentiment: string | null
+          tags: string[] | null
           title: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           agent_type: string
+          confidence_score?: number | null
           created_at?: string
+          customer_satisfaction?: number | null
+          escalation_reason?: string | null
           id?: string
+          is_escalated?: boolean | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          sentiment?: string | null
+          tags?: string[] | null
           title?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           agent_type?: string
+          confidence_score?: number | null
           created_at?: string
+          customer_satisfaction?: number | null
+          escalation_reason?: string | null
           id?: string
+          is_escalated?: boolean | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          sentiment?: string | null
+          tags?: string[] | null
           title?: string | null
           updated_at?: string
           user_id?: string
@@ -773,6 +797,79 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      support_resolutions: {
+        Row: {
+          conversation_id: string | null
+          created_at: string
+          created_by: string
+          customer_satisfaction: number | null
+          id: string
+          issue_summary: string
+          organization_id: string | null
+          resolution_steps: Json | null
+          resolution_summary: string
+          resolution_time_minutes: number | null
+          tags: string[] | null
+          ticket_id: string | null
+          updated_at: string
+          was_escalated: boolean | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string
+          created_by: string
+          customer_satisfaction?: number | null
+          id?: string
+          issue_summary: string
+          organization_id?: string | null
+          resolution_steps?: Json | null
+          resolution_summary: string
+          resolution_time_minutes?: number | null
+          tags?: string[] | null
+          ticket_id?: string | null
+          updated_at?: string
+          was_escalated?: boolean | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string
+          customer_satisfaction?: number | null
+          id?: string
+          issue_summary?: string
+          organization_id?: string | null
+          resolution_steps?: Json | null
+          resolution_summary?: string
+          resolution_time_minutes?: number | null
+          tags?: string[] | null
+          ticket_id?: string | null
+          updated_at?: string
+          was_escalated?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_resolutions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_resolutions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_resolutions_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "escalation_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ticket_notes: {
         Row: {

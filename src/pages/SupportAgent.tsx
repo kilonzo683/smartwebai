@@ -1,13 +1,17 @@
 import { useCallback, useRef, useState, useEffect } from "react";
-import { HeadphonesIcon, MessageSquare, Upload, AlertTriangle, BarChart3, Users } from "lucide-react";
+import { HeadphonesIcon, MessageSquare, Upload, AlertTriangle, BarChart3, Users, BookOpen, Tag } from "lucide-react";
 import { AgentHeader } from "@/components/agents/AgentHeader";
 import { QuickActions } from "@/components/agents/QuickActions";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { KnowledgeBaseLibrary } from "@/components/support/KnowledgeBaseLibrary";
 import { SupportFileUpload } from "@/components/support/SupportFileUpload";
+import { TicketManager } from "@/components/support/TicketManager";
+import { ResolutionLogger } from "@/components/support/ResolutionLogger";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrganization } from "@/contexts/OrganizationContext";
+import { toast } from "@/hooks/use-toast";
 
 interface Document {
   id: string;
@@ -23,15 +27,22 @@ const quickActions = [
   { label: "View open tickets", icon: MessageSquare, prompt: "Show me the current open support tickets that need attention" },
   { label: "Check escalations", icon: AlertTriangle, prompt: "List any tickets that have been escalated and need immediate attention" },
   { label: "View analytics", icon: BarChart3, prompt: "Show me customer support analytics and performance metrics" },
-  { label: "Manage team", icon: Users, prompt: "Help me manage the support team assignments and workload" },
+  { label: "Log resolution", icon: BookOpen, prompt: "__LOG_RESOLUTION__" },
 ];
 
 export default function SupportAgent() {
   const quickActionHandler = useRef<((action: string) => void) | null>(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [resolutionDialogOpen, setResolutionDialogOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const { currentOrg } = useOrganization();
-  const [stats, setStats] = useState({ openTickets: 0, resolvedToday: 0, kbDocs: 0 });
+  const [stats, setStats] = useState({ 
+    openTickets: 0, 
+    resolvedToday: 0, 
+    kbDocs: 0,
+    avgSatisfaction: 0,
+    escalationRate: 0
+  });
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -40,19 +51,35 @@ export default function SupportAgent() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      const [openTicketsRes, resolvedTodayRes, kbDocsRes] = await Promise.all([
+      const [openTicketsRes, resolvedTodayRes, kbDocsRes, resolutionsRes] = await Promise.all([
         supabase.from("escalation_tickets").select("id", { count: "exact", head: true })
           .eq("organization_id", currentOrg.id).in("status", ["open", "in_progress"]),
         supabase.from("escalation_tickets").select("id", { count: "exact", head: true })
           .eq("organization_id", currentOrg.id).eq("status", "resolved").gte("resolved_at", today.toISOString()),
         supabase.from("knowledge_base").select("id", { count: "exact", head: true })
           .eq("organization_id", currentOrg.id).eq("is_active", true),
+        supabase.from("support_resolutions").select("customer_satisfaction, was_escalated")
+          .eq("organization_id", currentOrg.id).limit(100),
       ]);
+
+      // Calculate average satisfaction
+      let avgSatisfaction = 0;
+      let escalationRate = 0;
+      if (resolutionsRes.data && resolutionsRes.data.length > 0) {
+        const withRatings = resolutionsRes.data.filter(r => r.customer_satisfaction);
+        if (withRatings.length > 0) {
+          avgSatisfaction = withRatings.reduce((acc, r) => acc + (r.customer_satisfaction || 0), 0) / withRatings.length;
+        }
+        const escalated = resolutionsRes.data.filter(r => r.was_escalated).length;
+        escalationRate = Math.round((escalated / resolutionsRes.data.length) * 100);
+      }
 
       setStats({
         openTickets: openTicketsRes.count || 0,
         resolvedToday: resolvedTodayRes.count || 0,
         kbDocs: kbDocsRes.count || 0,
+        avgSatisfaction: Math.round(avgSatisfaction * 10) / 10,
+        escalationRate,
       });
     };
     fetchStats();
@@ -61,6 +88,10 @@ export default function SupportAgent() {
   const handleQuickAction = useCallback((prompt: string) => {
     if (prompt === "__UPLOAD_KB__") {
       setUploadDialogOpen(true);
+      return;
+    }
+    if (prompt === "__LOG_RESOLUTION__") {
+      setResolutionDialogOpen(true);
       return;
     }
     if (quickActionHandler.current) {
@@ -93,17 +124,29 @@ export default function SupportAgent() {
     }
   }, []);
 
+  const handleEscalate = useCallback((ticketId: string) => {
+    if (quickActionHandler.current) {
+      quickActionHandler.current(`I need to escalate ticket ${ticketId}. Please help me document the escalation reason and notify the appropriate team.`);
+    }
+  }, []);
+
+  const handleTakeover = useCallback((ticketId: string) => {
+    if (quickActionHandler.current) {
+      quickActionHandler.current(`I'm now handling ticket ${ticketId}. Please provide me with the full context and any relevant knowledge base articles to help resolve this issue.`);
+    }
+  }, []);
+
   return (
     <div className="space-y-6">
       <AgentHeader
         name="AI Customer Support Agent"
-        description="Handle customer inquiries, resolve tickets, and provide 24/7 support"
+        description="Handle customer inquiries, resolve tickets, and provide 24/7 support with intelligent escalation"
         icon={HeadphonesIcon}
         gradient="agent-card-support"
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-4">
           <ChatInterface
             agentName="Customer Support"
             agentColor="agent-card-support"
@@ -112,11 +155,19 @@ export default function SupportAgent() {
             onQuickAction={(handler) => { quickActionHandler.current = handler; }}
           />
         </div>
-        <div className="space-y-6">
+        
+        <div className="space-y-4">
           <QuickActions 
             actions={quickActions} 
             colorClass="text-agent-support"
             onActionClick={handleQuickAction}
+          />
+          
+          {/* Ticket Queue */}
+          <TicketManager 
+            onEscalate={handleEscalate}
+            onTakeover={handleTakeover}
+            refreshKey={refreshKey}
           />
           
           {/* Knowledge Base Library */}
@@ -139,6 +190,13 @@ export default function SupportAgent() {
             </DialogContent>
           </Dialog>
           
+          {/* Resolution Logger Dialog */}
+          <ResolutionLogger
+            isOpen={resolutionDialogOpen}
+            onClose={() => setResolutionDialogOpen(false)}
+            onLogged={() => setRefreshKey(prev => prev + 1)}
+          />
+          
           {/* Stats Card */}
           <div className="glass rounded-2xl p-4 animate-slide-up" style={{ animationDelay: "300ms" }}>
             <h3 className="text-sm font-medium text-muted-foreground mb-3">Support Metrics</h3>
@@ -154,6 +212,18 @@ export default function SupportAgent() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-foreground">KB Documents</span>
                 <span className="text-sm font-semibold text-agent-support">{stats.kbDocs}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-foreground">Avg Satisfaction</span>
+                <span className="text-sm font-semibold text-agent-support">
+                  {stats.avgSatisfaction > 0 ? `${stats.avgSatisfaction}/5` : "N/A"}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-foreground">Escalation Rate</span>
+                <span className="text-sm font-semibold text-agent-support">
+                  {stats.escalationRate}%
+                </span>
               </div>
             </div>
           </div>
