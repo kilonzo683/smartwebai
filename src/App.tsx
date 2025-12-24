@@ -9,6 +9,7 @@ import SecretaryAgent from "./pages/SecretaryAgent";
 import SupportAgent from "./pages/SupportAgent";
 import SocialAgent from "./pages/SocialAgent";
 import LecturerAgent from "./pages/LecturerAgent";
+import StudentQuiz from "./pages/StudentQuiz";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/support" element={<SupportAgent />} />
             <Route path="/social" element={<SocialAgent />} />
             <Route path="/lecturer" element={<LecturerAgent />} />
+            <Route path="/student-quiz" element={<StudentQuiz />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
           <Route path="*" element={<NotFound />} />
