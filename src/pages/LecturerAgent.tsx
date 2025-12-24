@@ -1,10 +1,13 @@
 import { useCallback, useRef, useState, useEffect } from "react";
-import { GraduationCap, Upload, FileQuestion, ClipboardCheck, BarChart3, BookOpen } from "lucide-react";
+import { GraduationCap, Upload, FileQuestion, ClipboardCheck, BarChart3, BookOpen, MessageSquare, FileText } from "lucide-react";
 import { AgentHeader } from "@/components/agents/AgentHeader";
 import { QuickActions } from "@/components/agents/QuickActions";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { FileUpload } from "@/components/chat/FileUpload";
 import { DocumentLibrary } from "@/components/lecturer/DocumentLibrary";
+import { PerformanceTracker } from "@/components/lecturer/PerformanceTracker";
+import { ReportGenerator } from "@/components/lecturer/ReportGenerator";
+import { FeedbackGenerator } from "@/components/lecturer/FeedbackGenerator";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,18 +25,22 @@ interface Document {
 const quickActions = [
   { label: "Upload lecture notes", icon: Upload, prompt: "__UPLOAD_DOCUMENT__" },
   { label: "Generate a quiz", icon: FileQuestion, prompt: "__GENERATE_QUIZ__" },
-  { label: "Auto-mark tests", icon: ClipboardCheck, prompt: "Help me auto-grade the latest batch of student tests" },
-  { label: "View student analytics", icon: BarChart3, prompt: "Show me student performance analytics and weak topic areas" },
-  { label: "Create summary", icon: BookOpen, prompt: "Create a summary of the recent lecture material for students" },
+  { label: "Auto-mark tests", icon: ClipboardCheck, prompt: "Help me auto-grade the latest batch of student tests and provide detailed feedback" },
+  { label: "View analytics", icon: BarChart3, prompt: "Show me student performance analytics, identify weak topics, and suggest improvements" },
+  { label: "Create summary", icon: BookOpen, prompt: "Create a comprehensive summary of the recent lecture material for students" },
+  { label: "Generate feedback", icon: MessageSquare, prompt: "__GENERATE_FEEDBACK__" },
+  { label: "Export report", icon: FileText, prompt: "__GENERATE_REPORT__" },
 ];
 
 export default function LecturerAgent() {
   const quickActionHandler = useRef<((action: string) => void) | null>(null);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
+  const [feedbackDialogOpen, setFeedbackDialogOpen] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [uploadMode, setUploadMode] = useState<"extract" | "quiz">("extract");
   const [refreshKey, setRefreshKey] = useState(0);
   const { user } = useAuth();
-  const [stats, setStats] = useState({ quizzes: 0, documents: 0, attempts: 0 });
+  const [stats, setStats] = useState({ quizzes: 0, documents: 0, attempts: 0, avgScore: 0 });
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -42,13 +49,20 @@ export default function LecturerAgent() {
       const [quizzesRes, docsRes, attemptsRes] = await Promise.all([
         supabase.from("quizzes").select("id", { count: "exact", head: true }).eq("user_id", user.id),
         supabase.from("lecture_documents").select("id", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("quiz_attempts").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("quiz_attempts").select("score, total_questions").eq("user_id", user.id),
       ]);
+
+      let avgScore = 0;
+      if (attemptsRes.data && attemptsRes.data.length > 0) {
+        const total = attemptsRes.data.reduce((acc, a) => acc + (a.score / a.total_questions) * 100, 0);
+        avgScore = Math.round(total / attemptsRes.data.length);
+      }
 
       setStats({
         quizzes: quizzesRes.count || 0,
         documents: docsRes.count || 0,
-        attempts: attemptsRes.count || 0,
+        attempts: attemptsRes.data?.length || 0,
+        avgScore,
       });
     };
     fetchStats();
@@ -65,6 +79,14 @@ export default function LecturerAgent() {
       setUploadDialogOpen(true);
       return;
     }
+    if (prompt === "__GENERATE_FEEDBACK__") {
+      setFeedbackDialogOpen(true);
+      return;
+    }
+    if (prompt === "__GENERATE_REPORT__") {
+      setReportDialogOpen(true);
+      return;
+    }
     if (quickActionHandler.current) {
       quickActionHandler.current(prompt);
     }
@@ -72,12 +94,12 @@ export default function LecturerAgent() {
 
   const handleFileProcessed = useCallback((result: { fileName: string; content?: string; quiz?: string }) => {
     setUploadDialogOpen(false);
-    setRefreshKey(prev => prev + 1); // Refresh document library
+    setRefreshKey(prev => prev + 1);
     
     if (result.quiz && quickActionHandler.current) {
       quickActionHandler.current(`I've generated a quiz from "${result.fileName}":\n\n${result.quiz}`);
     } else if (result.content && quickActionHandler.current) {
-      quickActionHandler.current(`I've uploaded "${result.fileName}". The document has been processed and saved. What would you like me to do with it? I can:\n\n• Generate quiz questions\n• Create a summary\n• Identify key concepts\n• Create study notes`);
+      quickActionHandler.current(`I've uploaded "${result.fileName}". The document has been processed. What would you like me to do with it?\n\n• Generate quiz questions\n• Create a summary\n• Identify weak topics\n• Create study notes`);
     }
   }, []);
 
@@ -85,7 +107,7 @@ export default function LecturerAgent() {
     if (quickActionHandler.current && doc.extracted_text) {
       quickActionHandler.current(`Generate a multiple choice quiz based on this document "${doc.file_name}":\n\nContent:\n${doc.extracted_text.slice(0, 5000)}`);
     } else if (quickActionHandler.current) {
-      quickActionHandler.current(`Please generate a quiz from the document "${doc.file_name}". I'll need you to help me extract key concepts and create questions.`);
+      quickActionHandler.current(`Please generate a quiz from the document "${doc.file_name}".`);
     }
   }, []);
 
@@ -93,7 +115,7 @@ export default function LecturerAgent() {
     if (quickActionHandler.current && doc.extracted_text) {
       quickActionHandler.current(`Create a comprehensive summary of this document "${doc.file_name}":\n\nContent:\n${doc.extracted_text.slice(0, 5000)}`);
     } else if (quickActionHandler.current) {
-      quickActionHandler.current(`Please create a summary of the document "${doc.file_name}". Include the main topics, key points, and important concepts.`);
+      quickActionHandler.current(`Please create a summary of the document "${doc.file_name}".`);
     }
   }, []);
 
@@ -101,7 +123,7 @@ export default function LecturerAgent() {
     <div className="space-y-6">
       <AgentHeader
         name="AI Lecturer Assistant"
-        description="Create quizzes, grade tests, and help students learn more effectively"
+        description="Create quizzes, grade tests, track performance, and provide AI-powered feedback"
         icon={GraduationCap}
         gradient="agent-card-lecturer"
       />
@@ -116,19 +138,21 @@ export default function LecturerAgent() {
             onQuickAction={(handler) => { quickActionHandler.current = handler; }}
           />
         </div>
-        <div className="space-y-6">
+        <div className="space-y-4">
           <QuickActions 
             actions={quickActions} 
             colorClass="text-agent-lecturer"
             onActionClick={handleQuickAction}
           />
           
-          {/* Document Library */}
           <DocumentLibrary
             key={refreshKey}
             onGenerateQuiz={handleGenerateQuizFromDoc}
             onCreateSummary={handleCreateSummaryFromDoc}
           />
+          
+          <PerformanceTracker />
+          <ReportGenerator />
           
           {/* Upload Dialog */}
           <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
@@ -168,6 +192,13 @@ export default function LecturerAgent() {
             </DialogContent>
           </Dialog>
           
+          {/* Feedback Dialog */}
+          <Dialog open={feedbackDialogOpen} onOpenChange={setFeedbackDialogOpen}>
+            <DialogContent className="max-w-lg">
+              <FeedbackGenerator />
+            </DialogContent>
+          </Dialog>
+          
           {/* Stats Card */}
           <div className="glass rounded-2xl p-4 animate-slide-up" style={{ animationDelay: "300ms" }}>
             <h3 className="text-sm font-medium text-muted-foreground mb-3">Teaching Stats</h3>
@@ -183,6 +214,10 @@ export default function LecturerAgent() {
               <div className="flex justify-between items-center">
                 <span className="text-sm text-foreground">Quiz Attempts</span>
                 <span className="text-sm font-semibold text-agent-lecturer">{stats.attempts}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-foreground">Avg Score</span>
+                <span className="text-sm font-semibold text-agent-lecturer">{stats.avgScore}%</span>
               </div>
             </div>
           </div>

@@ -299,6 +299,53 @@ export type Database = {
         }
         Relationships: []
       }
+      lecturer_reports: {
+        Row: {
+          content: Json
+          created_at: string
+          export_format: string | null
+          generated_at: string
+          id: string
+          is_exported: boolean | null
+          quiz_id: string | null
+          report_type: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          content: Json
+          created_at?: string
+          export_format?: string | null
+          generated_at?: string
+          id?: string
+          is_exported?: boolean | null
+          quiz_id?: string | null
+          report_type: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          export_format?: string | null
+          generated_at?: string
+          id?: string
+          is_exported?: boolean | null
+          quiz_id?: string | null
+          report_type?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lecturer_reports_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           content: string
@@ -512,26 +559,32 @@ export type Database = {
       quizzes: {
         Row: {
           created_at: string
+          difficulty: string | null
           document_id: string | null
           id: string
           questions: Json
           title: string
+          topics: string[] | null
           user_id: string
         }
         Insert: {
           created_at?: string
+          difficulty?: string | null
           document_id?: string | null
           id?: string
           questions?: Json
           title: string
+          topics?: string[] | null
           user_id: string
         }
         Update: {
           created_at?: string
+          difficulty?: string | null
           document_id?: string | null
           id?: string
           questions?: Json
           title?: string
+          topics?: string[] | null
           user_id?: string
         }
         Relationships: [
@@ -722,6 +775,223 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      social_brand_profiles: {
+        Row: {
+          brand_name: string
+          brand_voice: string | null
+          color_palette: string[] | null
+          created_at: string
+          do_not_use: string[] | null
+          hashtag_groups: Json | null
+          id: string
+          is_active: boolean | null
+          key_topics: string[] | null
+          target_audience: string | null
+          tone_examples: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand_name: string
+          brand_voice?: string | null
+          color_palette?: string[] | null
+          created_at?: string
+          do_not_use?: string[] | null
+          hashtag_groups?: Json | null
+          id?: string
+          is_active?: boolean | null
+          key_topics?: string[] | null
+          target_audience?: string | null
+          tone_examples?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand_name?: string
+          brand_voice?: string | null
+          color_palette?: string[] | null
+          created_at?: string
+          do_not_use?: string[] | null
+          hashtag_groups?: Json | null
+          id?: string
+          is_active?: boolean | null
+          key_topics?: string[] | null
+          target_audience?: string | null
+          tone_examples?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_campaigns: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string | null
+          goals: Json | null
+          id: string
+          name: string
+          performance_summary: Json | null
+          platforms: string[] | null
+          start_date: string | null
+          status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          goals?: Json | null
+          id?: string
+          name: string
+          performance_summary?: Json | null
+          platforms?: string[] | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          goals?: Json | null
+          id?: string
+          name?: string
+          performance_summary?: Json | null
+          platforms?: string[] | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_content_calendar: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          campaign_id: string | null
+          content: string | null
+          created_at: string
+          engagement_metrics: Json | null
+          hashtags: string[] | null
+          id: string
+          media_urls: string[] | null
+          platform: string
+          post_type: string | null
+          published_at: string | null
+          scheduled_at: string | null
+          status: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_id?: string | null
+          content?: string | null
+          created_at?: string
+          engagement_metrics?: Json | null
+          hashtags?: string[] | null
+          id?: string
+          media_urls?: string[] | null
+          platform: string
+          post_type?: string | null
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_id?: string | null
+          content?: string | null
+          created_at?: string
+          engagement_metrics?: Json | null
+          hashtags?: string[] | null
+          id?: string
+          media_urls?: string[] | null
+          platform?: string
+          post_type?: string | null
+          published_at?: string | null
+          scheduled_at?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_content_calendar_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "social_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_performance: {
+        Row: {
+          average_score: number | null
+          created_at: string
+          feedback_notes: string | null
+          id: string
+          last_attempt_at: string | null
+          quiz_id: string | null
+          strong_topics: string[] | null
+          student_identifier: string
+          topic_scores: Json | null
+          total_attempts: number | null
+          updated_at: string
+          user_id: string
+          weak_topics: string[] | null
+        }
+        Insert: {
+          average_score?: number | null
+          created_at?: string
+          feedback_notes?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          quiz_id?: string | null
+          strong_topics?: string[] | null
+          student_identifier: string
+          topic_scores?: Json | null
+          total_attempts?: number | null
+          updated_at?: string
+          user_id: string
+          weak_topics?: string[] | null
+        }
+        Update: {
+          average_score?: number | null
+          created_at?: string
+          feedback_notes?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          quiz_id?: string | null
+          strong_topics?: string[] | null
+          student_identifier?: string
+          topic_scores?: Json | null
+          total_attempts?: number | null
+          updated_at?: string
+          user_id?: string
+          weak_topics?: string[] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_performance_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscription_plans: {
         Row: {
