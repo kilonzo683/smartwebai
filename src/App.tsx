@@ -11,6 +11,7 @@ import SocialAgent from "./pages/SocialAgent";
 import LecturerAgent from "./pages/LecturerAgent";
 import StudentQuiz from "./pages/StudentQuiz";
 import Settings from "./pages/Settings";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +23,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/auth" element={<Auth />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<Index />} />
             <Route path="/secretary" element={<SecretaryAgent />} />
