@@ -47,11 +47,14 @@ serve(async (req: Request): Promise<Response> => {
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
 
+    // Use the redirectTo from the request body, which is the frontend app URL
+    const appRedirectUrl = redirectTo || "https://13ea3b73-5a54-4926-bd95-e5c254bc2282.lovableproject.com/auth";
+    
     const { data, error } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
       email,
       options: {
-        redirectTo: redirectTo ?? `${new URL(req.url).origin}/auth`,
+        redirectTo: appRedirectUrl,
       },
     });
 
