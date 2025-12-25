@@ -247,36 +247,38 @@ export default function Auth() {
 
   const handleForgotPassword = async () => {
     if (!validateInputs(false)) return;
-    
+
     setIsLoading(true);
     try {
       const redirectUrl = `${window.location.origin}/auth`;
-      
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: redirectUrl,
+
+      const { data, error } = await supabase.functions.invoke("request-password-reset", {
+        body: {
+          email,
+          redirectTo: redirectUrl,
+        },
       });
 
       if (error) {
-        toast({
-          title: "Error",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
+        throw error;
+      }
+
+      if (data?.error) {
+        throw new Error(data.error);
       }
 
       toast({
         title: "Check your email",
-        description: "We've sent you a password reset link. Please check your inbox.",
+        description: "We've sent you a password reset link. Please check your inbox (and spam).",
       });
-      
+
       // Go back to sign in view
       setCurrentView("auth");
       setEmail("");
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: error?.message || "Failed to send password reset email.",
         variant: "destructive",
       });
     } finally {
