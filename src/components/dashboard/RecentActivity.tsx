@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Mail, HeadphonesIcon, Share2, GraduationCap, Clock, MessageSquare } from "lucide-react";
+import { Mail, HeadphonesIcon, Share2, GraduationCap, Clock, MessageSquare, CheckCircle, Calendar, FileText, Ticket } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatDistanceToNow } from "date-fns";
+import { useDemoData } from "@/hooks/useDemoData";
+import { Badge } from "@/components/ui/badge";
 
 interface Activity {
   id: string;
@@ -43,12 +45,67 @@ const agentConfig: Record<string, { icon: typeof Mail; color: string; bgColor: s
   },
 };
 
+const activityTypeConfig: Record<string, { icon: typeof Mail; color: string; bgColor: string }> = {
+  conversation: {
+    icon: MessageSquare,
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
+  },
+  task: {
+    icon: CheckCircle,
+    color: "text-green-500",
+    bgColor: "bg-green-500/10",
+  },
+  post: {
+    icon: Share2,
+    color: "text-orange-500",
+    bgColor: "bg-orange-500/10",
+  },
+  quiz: {
+    icon: GraduationCap,
+    color: "text-purple-500",
+    bgColor: "bg-purple-500/10",
+  },
+  ticket: {
+    icon: Ticket,
+    color: "text-red-500",
+    bgColor: "bg-red-500/10",
+  },
+  email: {
+    icon: Mail,
+    color: "text-cyan-500",
+    bgColor: "bg-cyan-500/10",
+  },
+};
+
 export function RecentActivity() {
   const { user } = useAuth();
+  const { isDemoMode, recentActivity: demoActivity } = useDemoData();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // If demo mode is enabled, use demo data
+    if (isDemoMode && demoActivity.length > 0) {
+      const demoActivities: Activity[] = demoActivity.map((activity) => {
+        const typeConfig = activityTypeConfig[activity.type] || activityTypeConfig.conversation;
+        const agentConf = agentConfig[activity.agent] || agentConfig.secretary;
+        return {
+          id: activity.id,
+          agent: activity.agent,
+          icon: typeConfig.icon,
+          action: activity.title,
+          target: activity.description,
+          time: formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true }),
+          color: typeConfig.color,
+          bgColor: typeConfig.bgColor,
+        };
+      });
+      setActivities(demoActivities);
+      setIsLoading(false);
+      return;
+    }
+
     if (!user) return;
 
     const fetchActivities = async () => {
@@ -83,7 +140,7 @@ export function RecentActivity() {
     };
 
     fetchActivities();
-  }, [user]);
+  }, [user, isDemoMode, demoActivity]);
 
   if (isLoading) {
     return (
@@ -110,6 +167,11 @@ export function RecentActivity() {
     <div className="glass rounded-2xl p-6 animate-slide-up" style={{ animationDelay: "400ms" }}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground">Recent Activity</h3>
+        {isDemoMode && (
+          <Badge variant="outline" className="bg-purple-500/10 border-purple-500/20 text-purple-500">
+            Demo Data
+          </Badge>
+        )}
       </div>
 
       {activities.length === 0 ? (

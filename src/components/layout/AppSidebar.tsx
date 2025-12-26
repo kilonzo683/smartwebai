@@ -187,15 +187,18 @@ function SidebarContent({
           {maintenanceMode && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20",
-                  collapsed && "justify-center px-2"
-                )}>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg bg-orange-500/10 border border-orange-500/20 w-full text-left",
+                    collapsed && "justify-center px-2"
+                  )}
+                >
                   <Wrench className="w-4 h-4 text-orange-500 flex-shrink-0" />
                   {!collapsed && (
                     <span className="text-xs font-medium text-orange-500">Maintenance Mode</span>
                   )}
-                </div>
+                </button>
               </TooltipTrigger>
               <TooltipContent side="right">
                 <p>Platform is in maintenance mode</p>
@@ -205,15 +208,18 @@ function SidebarContent({
           {demoMode && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20",
-                  collapsed && "justify-center px-2"
-                )}>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20 w-full text-left",
+                    collapsed && "justify-center px-2"
+                  )}
+                >
                   <TestTube className="w-4 h-4 text-purple-500 flex-shrink-0" />
                   {!collapsed && (
                     <span className="text-xs font-medium text-purple-500">Demo Mode</span>
                   )}
-                </div>
+                </button>
               </TooltipTrigger>
               <TooltipContent side="right">
                 <p>Demo features are enabled</p>
