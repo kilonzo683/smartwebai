@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface BrandingSettings {
   platformName: string;
   logoUrl: string | null;
+  mobileLogoUrl: string | null;
   faviconUrl: string | null;
   heroImageUrl: string | null;
   tagline: string;
@@ -20,6 +21,7 @@ interface BrandingContextType {
 const defaultBranding: BrandingSettings = {
   platformName: "AI Work Assistant",
   logoUrl: null,
+  mobileLogoUrl: null,
   faviconUrl: null,
   heroImageUrl: null,
   tagline: "AI-Powered Work Assistant",
@@ -57,6 +59,7 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
         }
         if (setting.key === "branding_settings") {
           if (value.logo_url) newBranding.logoUrl = value.logo_url as string;
+          if (value.mobile_logo_url) newBranding.mobileLogoUrl = value.mobile_logo_url as string;
           if (value.favicon_url) newBranding.faviconUrl = value.favicon_url as string;
           if (value.hero_image_url) newBranding.heroImageUrl = value.hero_image_url as string;
           if (value.tagline) newBranding.tagline = value.tagline as string;
