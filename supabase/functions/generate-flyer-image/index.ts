@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,26 +21,32 @@ serve(async (req) => {
   try {
     const { prompt, headline, platform, style } = await req.json() as FlyerRequest;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Supabase configuration missing");
+    }
+
     console.log(`Generating flyer image for platform: ${platform}`);
 
-    // Platform-specific aspect ratios
-    const aspectRatios: Record<string, string> = {
-      instagram: "1:1 square format",
-      facebook: "landscape 1200x630 format",
-      twitter: "landscape 16:9 format",
-      linkedin: "landscape 1200x627 format",
-      story: "vertical 9:16 format for stories",
+    // Platform-specific dimensions
+    const platformDimensions: Record<string, { width: number; height: number; aspectText: string }> = {
+      instagram: { width: 1080, height: 1080, aspectText: "1:1 square format" },
+      facebook: { width: 1200, height: 630, aspectText: "landscape 1200x630 format" },
+      twitter: { width: 1200, height: 675, aspectText: "landscape 16:9 format" },
+      linkedin: { width: 1200, height: 627, aspectText: "landscape 1200x627 format" },
+      story: { width: 1080, height: 1920, aspectText: "vertical 9:16 format for stories" },
     };
 
-    const aspectRatio = aspectRatios[platform] || aspectRatios.instagram;
+    const dimensions = platformDimensions[platform] || platformDimensions.instagram;
 
     // Build comprehensive image prompt
-    const enhancedPrompt = `Professional social media marketing flyer, ${aspectRatio}. 
+    const enhancedPrompt = `Professional social media marketing flyer, ${dimensions.aspectText}. 
 ${prompt}
 ${headline ? `Main headline text: "${headline}"` : ""}
 Style: ${style || "modern, clean, professional, eye-catching"}
@@ -89,19 +96,63 @@ Ultra high resolution, crisp typography if text included.`;
     const data = await response.json();
     
     // Extract image from response
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    const imageBase64Url = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
     const textResponse = data.choices?.[0]?.message?.content;
 
-    if (!imageUrl) {
+    if (!imageBase64Url) {
       console.error("No image in response:", JSON.stringify(data));
       throw new Error("No image generated");
     }
 
-    console.log("Flyer image generated successfully");
+    console.log("Image generated, uploading to storage...");
+
+    // Parse base64 data
+    const base64Match = imageBase64Url.match(/^data:image\/(\w+);base64,(.+)$/);
+    if (!base64Match) {
+      throw new Error("Invalid image data format");
+    }
+
+    const imageType = base64Match[1];
+    const base64Data = base64Match[2];
+    
+    // Convert base64 to Uint8Array
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    // Generate unique filename
+    const filename = `flyers/${Date.now()}-${crypto.randomUUID()}.${imageType}`;
+
+    // Initialize Supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    // Upload to storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from("social-media-assets")
+      .upload(filename, bytes, {
+        contentType: `image/${imageType}`,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError);
+      throw new Error(`Failed to upload image: ${uploadError.message}`);
+    }
+
+    // Get public URL
+    const { data: urlData } = supabase.storage
+      .from("social-media-assets")
+      .getPublicUrl(filename);
+
+    const publicUrl = urlData.publicUrl;
+
+    console.log("Flyer image uploaded successfully:", publicUrl);
 
     return new Response(JSON.stringify({
       success: true,
-      imageUrl,
+      imageUrl: publicUrl,
       description: textResponse,
       platform,
       generatedAt: new Date().toISOString(),
