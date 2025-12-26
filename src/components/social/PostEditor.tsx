@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { 
   Save, X, Calendar, Image, Hash, Send, Eye, Loader2,
-  Facebook, Twitter, Instagram, Linkedin, CheckCircle2
+  Facebook, Twitter, Instagram, Linkedin, CheckCircle2,
+  Sparkles, Wand2, ImagePlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,12 @@ interface PostData {
   hashtags: string[];
   scheduled_at: string | null;
   post_type: string;
+  media_urls?: string[];
+}
+
+interface BrandProfile {
+  brand_voice: string | null;
+  key_topics: string[] | null;
 }
 
 const platforms = [
@@ -45,8 +52,13 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingHashtags, setIsGeneratingHashtags] = useState(false);
+  const [isGeneratingFlyer, setIsGeneratingFlyer] = useState(false);
   const [hashtagInput, setHashtagInput] = useState("");
   const [activeTab, setActiveTab] = useState("edit");
+  const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
+  const [generatedFlyerUrl, setGeneratedFlyerUrl] = useState<string | null>(null);
   
   const [post, setPost] = useState<PostData>({
     title: "",
@@ -56,23 +68,51 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
     hashtags: [],
     scheduled_at: null,
     post_type: "post",
+    media_urls: [],
   });
 
   useEffect(() => {
-    if (isOpen && postId) {
-      fetchPost();
-    } else if (isOpen) {
-      setPost({
-        title: "",
-        content: "",
-        platform: "twitter",
-        status: "draft",
-        hashtags: [],
-        scheduled_at: null,
-        post_type: "post",
-      });
+    if (isOpen) {
+      fetchBrandProfile();
+      if (postId) {
+        fetchPost();
+      } else {
+        resetPost();
+      }
     }
   }, [isOpen, postId]);
+
+  const resetPost = () => {
+    setPost({
+      title: "",
+      content: "",
+      platform: "twitter",
+      status: "draft",
+      hashtags: [],
+      scheduled_at: null,
+      post_type: "post",
+      media_urls: [],
+    });
+    setGeneratedFlyerUrl(null);
+  };
+
+  const fetchBrandProfile = async () => {
+    if (!user) return;
+    try {
+      const { data } = await supabase
+        .from("social_brand_profiles")
+        .select("brand_voice, key_topics")
+        .eq("user_id", user.id)
+        .eq("is_active", true)
+        .single();
+      
+      if (data) {
+        setBrandProfile(data);
+      }
+    } catch (error) {
+      console.log("No active brand profile found");
+    }
+  };
 
   const fetchPost = async () => {
     if (!postId) return;
@@ -95,6 +135,7 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
           hashtags: data.hashtags || [],
           scheduled_at: data.scheduled_at,
           post_type: data.post_type || "post",
+          media_urls: data.media_urls || [],
         });
       }
     } catch (error) {
@@ -113,6 +154,8 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
 
     setIsSaving(true);
     try {
+      const mediaUrls = generatedFlyerUrl ? [generatedFlyerUrl] : post.media_urls;
+      
       const saveData = {
         user_id: user.id,
         title: post.title,
@@ -122,6 +165,7 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
         hashtags: post.hashtags,
         scheduled_at: post.scheduled_at,
         post_type: post.post_type,
+        media_urls: mediaUrls,
       };
 
       if (post.id) {
@@ -151,6 +195,121 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
     }
   };
 
+  const handleGenerateContent = async () => {
+    if (!post.title.trim()) {
+      toast.error("Please enter a title first");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-social-content", {
+        body: {
+          type: "post",
+          title: post.title,
+          platform: post.platform,
+          brandVoice: brandProfile?.brand_voice,
+          keyTopics: brandProfile?.key_topics,
+          postType: post.post_type,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      setPost(prev => ({ ...prev, content: data.content }));
+      toast.success("Content generated!");
+    } catch (error) {
+      console.error("Error generating content:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate content");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateHashtags = async () => {
+    if (!post.title.trim() && !post.content.trim()) {
+      toast.error("Please enter a title or content first");
+      return;
+    }
+
+    setIsGeneratingHashtags(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-social-content", {
+        body: {
+          type: "hashtags",
+          title: post.title || post.content.slice(0, 100),
+          platform: post.platform,
+          keyTopics: brandProfile?.key_topics,
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      // Parse hashtags from response
+      const hashtags = data.content
+        .split(/\s+/)
+        .map((tag: string) => tag.replace(/^#/, "").trim())
+        .filter((tag: string) => tag.length > 0);
+
+      setPost(prev => ({ 
+        ...prev, 
+        hashtags: [...new Set([...prev.hashtags, ...hashtags])]
+      }));
+      toast.success("Hashtags generated!");
+    } catch (error) {
+      console.error("Error generating hashtags:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate hashtags");
+    } finally {
+      setIsGeneratingHashtags(false);
+    }
+  };
+
+  const handleGenerateFlyer = async () => {
+    if (!post.title.trim()) {
+      toast.error("Please enter a title first");
+      return;
+    }
+
+    setIsGeneratingFlyer(true);
+    try {
+      // First get the flyer design prompt
+      const { data: promptData, error: promptError } = await supabase.functions.invoke("generate-social-content", {
+        body: {
+          type: "flyer",
+          title: post.title,
+          platform: post.platform,
+          brandVoice: brandProfile?.brand_voice,
+        },
+      });
+
+      if (promptError) throw promptError;
+      if (promptData?.error) throw new Error(promptData.error);
+
+      // Now generate the actual image
+      const { data: imageData, error: imageError } = await supabase.functions.invoke("generate-flyer-image", {
+        body: {
+          prompt: promptData.imagePrompt,
+          headline: promptData.headline,
+          platform: post.platform,
+        },
+      });
+
+      if (imageError) throw imageError;
+      if (imageData?.error) throw new Error(imageData.error);
+
+      setGeneratedFlyerUrl(imageData.imageUrl);
+      toast.success("Flyer generated! Preview it below.");
+      setActiveTab("preview");
+    } catch (error) {
+      console.error("Error generating flyer:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate flyer");
+    } finally {
+      setIsGeneratingFlyer(false);
+    }
+  };
+
   const handleAddHashtag = () => {
     const tag = hashtagInput.trim().replace(/^#/, "");
     if (tag && !post.hashtags.includes(tag)) {
@@ -165,6 +324,14 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
 
   const handleSubmitForApproval = () => {
     handleSave("pending");
+  };
+
+  const handleSchedule = () => {
+    if (!post.scheduled_at) {
+      toast.error("Please select a schedule date and time");
+      return;
+    }
+    handleSave("scheduled");
   };
 
   const handlePublish = () => {
@@ -191,7 +358,7 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
         <DialogHeader>
           <DialogTitle>{post.id ? "Edit Post" : "Create New Post"}</DialogTitle>
           <DialogDescription>
-            Create and schedule social media content
+            Create and schedule social media content with AI assistance
           </DialogDescription>
         </DialogHeader>
 
@@ -228,13 +395,62 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
 
               {/* Title */}
               <div className="space-y-2">
-                <Label htmlFor="title">Title / Internal Name</Label>
+                <Label htmlFor="title">Title / Topic *</Label>
                 <Input
                   id="title"
                   value={post.title}
                   onChange={(e) => setPost(prev => ({ ...prev, title: e.target.value }))}
-                  placeholder="e.g., Black Friday Promo"
+                  placeholder="e.g., Black Friday Promo, New Product Launch"
                 />
+                <p className="text-xs text-muted-foreground">
+                  The AI will generate unique content based on this title
+                </p>
+              </div>
+
+              {/* AI Generation Buttons */}
+              <div className="flex flex-wrap gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateContent}
+                  disabled={isGenerating || !post.title.trim()}
+                  className="gap-2"
+                >
+                  {isGenerating ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Wand2 className="w-4 h-4" />
+                  )}
+                  Generate Post
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateHashtags}
+                  disabled={isGeneratingHashtags || (!post.title.trim() && !post.content.trim())}
+                  className="gap-2"
+                >
+                  {isGeneratingHashtags ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Hash className="w-4 h-4" />
+                  )}
+                  Generate Hashtags
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateFlyer}
+                  disabled={isGeneratingFlyer || !post.title.trim()}
+                  className="gap-2"
+                >
+                  {isGeneratingFlyer ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <ImagePlus className="w-4 h-4" />
+                  )}
+                  Generate Flyer
+                </Button>
               </div>
 
               {/* Content */}
@@ -249,7 +465,7 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
                   id="content"
                   value={post.content}
                   onChange={(e) => setPost(prev => ({ ...prev, content: e.target.value }))}
-                  placeholder="Write your post content here..."
+                  placeholder="Write your post content here or use AI to generate..."
                   rows={6}
                   className={isOverLimit ? "border-destructive" : ""}
                 />
@@ -263,7 +479,7 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
                     value={hashtagInput}
                     onChange={(e) => setHashtagInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddHashtag())}
-                    placeholder="Add hashtag"
+                    placeholder="Add hashtag manually"
                     className="flex-1"
                   />
                   <Button variant="outline" onClick={handleAddHashtag}>
@@ -335,6 +551,17 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
                   </div>
                 </div>
                 
+                {/* Generated Flyer Preview */}
+                {generatedFlyerUrl && (
+                  <div className="mb-4 rounded-lg overflow-hidden border">
+                    <img 
+                      src={generatedFlyerUrl} 
+                      alt="Generated flyer" 
+                      className="w-full h-auto"
+                    />
+                  </div>
+                )}
+                
                 <p className="text-foreground whitespace-pre-wrap mb-4">
                   {post.content || "Your post content will appear here..."}
                 </p>
@@ -366,13 +593,19 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
               {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
               Save Draft
             </Button>
+            {post.scheduled_at && (
+              <Button variant="secondary" onClick={handleSchedule} disabled={isSaving}>
+                <Calendar className="w-4 h-4 mr-2" />
+                Schedule
+              </Button>
+            )}
             <Button variant="secondary" onClick={handleSubmitForApproval} disabled={isSaving}>
               <Eye className="w-4 h-4 mr-2" />
               Submit for Approval
             </Button>
             <Button onClick={handlePublish} disabled={isSaving || isOverLimit}>
               <Send className="w-4 h-4 mr-2" />
-              Publish
+              Publish Now
             </Button>
           </div>
         </div>
