@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { useBranding } from "@/contexts/BrandingContext";
 
 const features = [
   {
@@ -221,6 +222,7 @@ const team = [
 export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [email, setEmail] = useState("");
+  const { branding } = useBranding();
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -237,10 +239,18 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-primary" />
-              </div>
-              <span className="text-xl font-bold text-foreground">AI Smart Work</span>
+              {branding.logoUrl ? (
+                <img 
+                  src={branding.logoUrl} 
+                  alt={branding.platformName} 
+                  className="w-10 h-10 rounded-xl object-contain"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-primary" />
+                </div>
+              )}
+              <span className="text-xl font-bold text-foreground">{branding.platformName}</span>
             </div>
             
             {/* Desktop Navigation */}
@@ -330,8 +340,7 @@ export default function Landing() {
           </h1>
           
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
-            Save time, automate work, and manage your business smarter with AI-powered assistants 
-            for secretarial tasks, customer support, social media, and education.
+            {branding.tagline || "Save time, automate work, and manage your business smarter with AI-powered assistants for secretarial tasks, customer support, social media, and education."}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
@@ -673,13 +682,21 @@ export default function Landing() {
             {/* Company Info */}
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-primary" />
-                </div>
-                <span className="text-xl font-bold text-foreground">AI Smart Work</span>
+                {branding.logoUrl ? (
+                  <img 
+                    src={branding.logoUrl} 
+                    alt={branding.platformName} 
+                    className="w-10 h-10 rounded-xl object-contain"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-primary" />
+                  </div>
+                )}
+                <span className="text-xl font-bold text-foreground">{branding.platformName}</span>
               </div>
               <p className="text-muted-foreground text-sm mb-4">
-                Your AI-powered work assistant platform. Automate tasks, boost productivity, and grow your business smarter.
+                {branding.tagline || "Your AI-powered work assistant platform. Automate tasks, boost productivity, and grow your business smarter."}
               </p>
               <div className="flex gap-3">
                 <a href="#" className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
@@ -773,7 +790,7 @@ export default function Landing() {
           {/* Bottom Bar */}
           <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2026 AI Smart Work Assistant. All rights reserved.
+              © {new Date().getFullYear()} {branding.platformName}. All rights reserved.
             </p>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
