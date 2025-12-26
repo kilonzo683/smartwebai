@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useBranding } from "@/contexts/BrandingContext";
 import type { Json } from "@/integrations/supabase/types";
 
 // System Settings Interfaces
@@ -92,6 +93,7 @@ export function SystemSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState<{ [key: string]: boolean }>({});
+  const { refetch: refetchBranding } = useBranding();
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
@@ -226,6 +228,11 @@ export function SystemSettings() {
 
       if (error) throw error;
       toast.success("Settings saved successfully");
+      
+      // Refresh branding context when general or branding settings are saved
+      if (key === "general_settings" || key === "branding_settings") {
+        await refetchBranding();
+      }
     } catch (error) {
       console.error("Error saving settings:", error);
       toast.error("Failed to save settings");

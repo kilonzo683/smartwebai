@@ -28,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRole } from "@/contexts/RoleContext";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { useBranding } from "@/contexts/BrandingContext";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const agents = [
@@ -114,6 +115,7 @@ function SidebarContent({
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isSuperAdmin, isOrgAdmin, isSupportAgent } = useRole();
+  const { branding } = useBranding();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -134,11 +136,19 @@ function SidebarContent({
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-primary" />
-          </div>
+          {branding.logoUrl ? (
+            <img 
+              src={branding.logoUrl} 
+              alt={branding.platformName} 
+              className="w-8 h-8 rounded-lg object-contain"
+            />
+          ) : (
+            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Sparkles className="w-5 h-5 text-primary" />
+            </div>
+          )}
           {!collapsed && (
-            <span className="font-semibold text-foreground">AI Work Assistant</span>
+            <span className="font-semibold text-foreground">{branding.platformName}</span>
           )}
         </div>
       </div>
@@ -301,6 +311,7 @@ function SidebarContent({
 
 export function AppSidebar() {
   const { collapsed, toggleCollapsed } = useSidebar();
+  const { branding } = useBranding();
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
@@ -327,10 +338,18 @@ export function AppSidebar() {
           </SheetContent>
         </Sheet>
         <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-primary" />
-          </div>
-          <span className="font-semibold text-foreground text-sm">AI Work Assistant</span>
+          {branding.logoUrl ? (
+            <img 
+              src={branding.logoUrl} 
+              alt={branding.platformName} 
+              className="w-7 h-7 rounded-lg object-contain"
+            />
+          ) : (
+            <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
+              <Sparkles className="w-4 h-4 text-primary" />
+            </div>
+          )}
+          <span className="font-semibold text-foreground text-sm">{branding.platformName}</span>
         </div>
       </div>
 
