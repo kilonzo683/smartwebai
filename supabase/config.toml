@@ -1,10 +1,1 @@
-project_id = "ugggqwfhlelhzwehqath"
-
-[functions.send-password-reset]
-verify_jwt = false
-
-[functions.transcribe-voice]
-verify_jwt = true
-
-[functions.scheduled-backup]
-verify_jwt = false
+project_id = "upoxlymldxmhjttktylu"
