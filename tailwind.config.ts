@@ -14,7 +14,18 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'Poppins', 'system-ui', 'sans-serif'],
+        heading: ['Poppins', 'Inter', 'sans-serif'],
+      },
+      fontSize: {
+        'xs': ['0.75rem', { lineHeight: '1rem' }],     // 12px - Captions/hints
+        'sm': ['0.875rem', { lineHeight: '1.25rem' }], // 14px - Labels/buttons
+        'base': ['1rem', { lineHeight: '1.5rem' }],    // 16px - Body text
+        'lg': ['1.125rem', { lineHeight: '1.75rem' }], // 18px - Subheadings
+        'xl': ['1.25rem', { lineHeight: '1.75rem' }],  // 20px
+        '2xl': ['1.5rem', { lineHeight: '2rem' }],     // 24px - Section headers
+        '3xl': ['1.875rem', { lineHeight: '2.25rem' }],// 30px
+        '4xl': ['2.25rem', { lineHeight: '2.5rem' }],  // 36px - Page headers
       },
       colors: {
         border: "hsl(var(--border))",
@@ -33,6 +44,18 @@ export default {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
+        warning: {
+          DEFAULT: "hsl(var(--warning))",
+          foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -72,6 +95,12 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        'card': 'var(--shadow-card)',
+        'card-hover': 'var(--shadow-card-hover)',
+        'glow-primary': 'var(--shadow-glow-primary)',
+        'input-focus': 'var(--shadow-input-focus)',
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },
@@ -84,14 +113,45 @@ export default {
         shimmer: {
           "100%": { transform: "translateX(100%)" },
         },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-out": {
+          "0%": { opacity: "1", transform: "translateY(0)" },
+          "100%": { opacity: "0", transform: "translateY(10px)" },
+        },
+        "scale-in": {
+          "0%": { transform: "scale(0.95)", opacity: "0" },
+          "100%": { transform: "scale(1)", opacity: "1" },
+        },
+        "slide-in-right": {
+          "0%": { transform: "translateX(100%)" },
+          "100%": { transform: "translateX(0)" },
+        },
+        "slide-out-right": {
+          "0%": { transform: "translateX(0)" },
+          "100%": { transform: "translateX(100%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         shimmer: "shimmer 2s infinite",
+        "fade-in": "fade-in 0.3s ease-out",
+        "fade-out": "fade-out 0.3s ease-out",
+        "scale-in": "scale-in 0.2s ease-out",
+        "slide-in-right": "slide-in-right 0.3s ease-out",
+        "slide-out-right": "slide-out-right 0.3s ease-out",
+        "enter": "fade-in 0.3s ease-out, scale-in 0.2s ease-out",
+        "exit": "fade-out 0.3s ease-out",
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+      },
+      transitionDuration: {
+        '200': '200ms',
+        '300': '300ms',
       },
     },
   },
