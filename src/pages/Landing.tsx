@@ -1,74 +1,235 @@
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import { 
   Sparkles, Mail, HeadphonesIcon, Share2, GraduationCap, 
   ArrowRight, CheckCircle2, Zap, Shield, BarChart3, 
-  Users, MessageSquare, Clock
+  Users, MessageSquare, Clock, Star, Building2, School,
+  Phone, MapPin, Facebook, Instagram, Linkedin, Twitter,
+  ChevronDown, Play, Menu, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const features = [
   {
     icon: Mail,
-    title: "AI Smart Secretary",
-    description: "Automate emails, schedule meetings, and convert voice notes to actionable tasks. Your 24/7 personal assistant.",
+    title: "Smart Secretary",
+    description: "Email & schedule automation. Convert voice notes to tasks, manage calendars, and draft professional emails automatically.",
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
+    learnMore: "#secretary"
   },
   {
     icon: HeadphonesIcon,
-    title: "AI Customer Support",
-    description: "Answer FAQs, handle tickets, and intelligently escalate complex issues. Multi-channel support made easy.",
+    title: "Customer Support",
+    description: "AI-powered support with human fallback. Handle FAQs, manage tickets, and escalate complex issues intelligently.",
     color: "text-green-500",
     bgColor: "bg-green-500/10",
+    learnMore: "#support"
   },
   {
     icon: Share2,
-    title: "AI Social Media Agent",
-    description: "Generate posts, manage content calendars, and engage with your audience automatically with brand-consistent messaging.",
+    title: "Social Media Agent",
+    description: "Content generation & approval workflows. Create posts, schedule content, and maintain brand consistency across platforms.",
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
+    learnMore: "#social"
   },
   {
     icon: GraduationCap,
-    title: "AI Lecturer Assistant",
-    description: "Generate quizzes from lecture notes, auto-grade tests, and track student performance with AI-powered insights.",
+    title: "Lecturer Assistant",
+    description: "Auto quizzes & performance tracking. Generate assessments from materials, grade automatically, and track student progress.",
     color: "text-orange-500",
     bgColor: "bg-orange-500/10",
+    learnMore: "#lecturer"
   },
 ];
 
-const benefits = [
-  { icon: Zap, title: "10x Productivity", description: "Automate repetitive tasks and focus on what matters" },
-  { icon: Clock, title: "24/7 Availability", description: "Your AI workforce never sleeps" },
-  { icon: Shield, title: "Enterprise Security", description: "SOC2 compliant with end-to-end encryption" },
-  { icon: BarChart3, title: "Smart Analytics", description: "Data-driven insights to optimize performance" },
-  { icon: Users, title: "Team Collaboration", description: "Multi-user support with role-based access" },
-  { icon: MessageSquare, title: "Multi-Channel", description: "Unified inbox across all channels" },
+const useCases = [
+  {
+    icon: Building2,
+    title: "For Businesses",
+    description: "Streamline operations and boost productivity",
+    points: [
+      "Automate customer support 24/7",
+      "Reduce response times by 80%",
+      "Scale without hiring more staff"
+    ]
+  },
+  {
+    icon: School,
+    title: "For Schools & Educators",
+    description: "Transform teaching and assessment",
+    points: [
+      "Auto-generate quizzes from lecture notes",
+      "Track student performance in real-time",
+      "Provide instant feedback on assessments"
+    ]
+  },
+  {
+    icon: HeadphonesIcon,
+    title: "For Support Teams",
+    description: "Deliver exceptional customer service",
+    points: [
+      "AI handles routine inquiries",
+      "Smart escalation to human agents",
+      "Multi-channel unified inbox"
+    ]
+  }
 ];
 
 const testimonials = [
   {
-    quote: "AI Work Assistant reduced our customer response time by 80%. It's like having a full support team working 24/7.",
+    quote: "AI Smart Work Assistant reduced our customer response time by 80%. It's like having a full support team working 24/7.",
     author: "Sarah Chen",
-    role: "Head of Support, TechFlow Inc",
+    role: "Head of Support",
+    company: "TechFlow Inc",
     avatar: "SC",
+    rating: 5
   },
   {
     quote: "The lecturer assistant saved me hours every week on quiz creation and grading. My students love the instant feedback.",
     author: "Dr. Michael Roberts",
-    role: "Professor, State University",
+    role: "Professor",
+    company: "State University",
     avatar: "MR",
+    rating: 5
   },
   {
     quote: "Our social media engagement increased 150% after implementing the AI Social Media Agent. Game changer!",
     author: "Jessica Martinez",
-    role: "Marketing Director, BrandCo",
+    role: "Marketing Director",
+    company: "BrandCo",
     avatar: "JM",
+    rating: 5
   },
 ];
 
+const pricingPlans = [
+  {
+    name: "Free",
+    price: 0,
+    description: "Perfect for trying out",
+    features: [
+      "1 AI agent",
+      "100 messages/month",
+      "Basic support",
+      "1 team member"
+    ],
+    cta: "Start Free",
+    popular: false
+  },
+  {
+    name: "Basic",
+    price: 29,
+    description: "For small teams",
+    features: [
+      "2 AI agents",
+      "1,000 messages/month",
+      "Email support",
+      "5 team members"
+    ],
+    cta: "Start Free Trial",
+    popular: false
+  },
+  {
+    name: "Pro",
+    price: 79,
+    description: "For growing businesses",
+    features: [
+      "All 4 AI agents",
+      "10,000 messages/month",
+      "Priority support",
+      "Unlimited team members",
+      "Advanced analytics"
+    ],
+    cta: "Start Free Trial",
+    popular: true
+  },
+  {
+    name: "Enterprise",
+    price: null,
+    description: "For large organizations",
+    features: [
+      "Unlimited AI agents",
+      "Unlimited messages",
+      "24/7 dedicated support",
+      "Custom integrations",
+      "SLA guarantee",
+      "On-premise option"
+    ],
+    cta: "Contact Sales",
+    popular: false
+  }
+];
+
+const faqs = [
+  {
+    question: "Is my data secure with AI Smart Work Assistant?",
+    answer: "Absolutely. We use end-to-end encryption, are SOC2 compliant, and never share your data with third parties. All data is stored in secure, enterprise-grade infrastructure with daily backups."
+  },
+  {
+    question: "How accurate is the AI? What about human fallback?",
+    answer: "Our AI achieves 95%+ accuracy on routine tasks. For complex queries, the system automatically escalates to human agents, ensuring nothing falls through the cracks."
+  },
+  {
+    question: "What are the pricing and plan limits?",
+    answer: "We offer flexible plans from Free to Enterprise. Each plan includes different message limits and agent access. You can upgrade anytime, and we'll notify you before reaching limits."
+  },
+  {
+    question: "What integrations are available?",
+    answer: "We integrate with WhatsApp, Gmail, social media platforms (Facebook, Instagram, LinkedIn, Twitter), calendar apps, and more. API access is available on Pro and Enterprise plans."
+  },
+  {
+    question: "Can I cancel my subscription anytime?",
+    answer: "Yes! You can cancel anytime. When you cancel, you'll continue to have access until the end of your billing period. No hidden fees or cancellation penalties."
+  },
+  {
+    question: "Do you offer discounts for nonprofits or education?",
+    answer: "Yes! We offer special pricing for nonprofit organizations and educational institutions. Contact our sales team for more information about our discount programs."
+  },
+  {
+    question: "How long is the free trial?",
+    answer: "All paid plans include a 14-day free trial with full access to features. No credit card required to start your trial."
+  }
+];
+
+const companyLogos = [
+  "TechFlow", "BrandCo", "EduPlus", "StartupXYZ", "GlobalCorp", "InnovateCo"
+];
+
+const team = [
+  {
+    name: "Alex Johnson",
+    role: "CEO & Co-Founder",
+    avatar: "AJ"
+  },
+  {
+    name: "Maria Garcia",
+    role: "CTO & Co-Founder",
+    avatar: "MG"
+  },
+  {
+    name: "David Lee",
+    role: "Head of AI",
+    avatar: "DL"
+  }
+];
+
 export default function Landing() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [email, setEmail] = useState("");
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+    setMobileMenuOpen(false);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -79,18 +240,26 @@ export default function Landing() {
               <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
                 <Sparkles className="w-6 h-6 text-primary" />
               </div>
-              <span className="text-xl font-bold text-foreground">AI Work Assistant</span>
+              <span className="text-xl font-bold text-foreground">AI Smart Work</span>
             </div>
+            
+            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6">
-              <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">
-                Pricing
-              </Link>
-              <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+              <button onClick={() => scrollToSection('features')} className="text-muted-foreground hover:text-foreground transition-colors">
                 Features
-              </a>
-              <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">
+              </button>
+              <button onClick={() => scrollToSection('pricing')} className="text-muted-foreground hover:text-foreground transition-colors">
+                Pricing
+              </button>
+              <button onClick={() => scrollToSection('testimonials')} className="text-muted-foreground hover:text-foreground transition-colors">
                 Testimonials
-              </a>
+              </button>
+              <button onClick={() => scrollToSection('faq')} className="text-muted-foreground hover:text-foreground transition-colors">
+                FAQ
+              </button>
+              <button onClick={() => scrollToSection('contact')} className="text-muted-foreground hover:text-foreground transition-colors">
+                Contact
+              </button>
               <Link to="/auth">
                 <Button variant="outline">Sign In</Button>
               </Link>
@@ -98,53 +267,93 @@ export default function Landing() {
                 <Button>Get Started Free</Button>
               </Link>
             </div>
-            <div className="md:hidden">
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden flex items-center gap-2">
               <Link to="/auth">
                 <Button size="sm">Get Started</Button>
               </Link>
+              <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </Button>
             </div>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden py-4 border-t border-border">
+              <div className="flex flex-col gap-3">
+                <button onClick={() => scrollToSection('features')} className="text-left text-muted-foreground hover:text-foreground transition-colors py-2">
+                  Features
+                </button>
+                <button onClick={() => scrollToSection('pricing')} className="text-left text-muted-foreground hover:text-foreground transition-colors py-2">
+                  Pricing
+                </button>
+                <button onClick={() => scrollToSection('testimonials')} className="text-left text-muted-foreground hover:text-foreground transition-colors py-2">
+                  Testimonials
+                </button>
+                <button onClick={() => scrollToSection('faq')} className="text-left text-muted-foreground hover:text-foreground transition-colors py-2">
+                  FAQ
+                </button>
+                <button onClick={() => scrollToSection('contact')} className="text-left text-muted-foreground hover:text-foreground transition-colors py-2">
+                  Contact
+                </button>
+                <Link to="/auth" className="text-muted-foreground hover:text-foreground transition-colors py-2">
+                  Sign In
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      {/* 1️⃣ Hero Section */}
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow" />
+        </div>
+
         <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8 animate-fade-in">
             <Sparkles className="w-4 h-4" />
             <span>Powered by Advanced AI</span>
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
-            Your AI-Powered
+          
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight animate-slide-up">
+            4 AI Agents.
             <br />
             <span className="bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
-              Work Assistant
+              One Smart Work Platform.
             </span>
           </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10">
-            Automate your work with 4 specialized AI agents: Smart Secretary, Customer Support, 
-            Social Media Manager, and Lecturer Assistant. One platform, endless possibilities.
+          
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-10 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            Save time, automate work, and manage your business smarter with AI-powered assistants 
+            for secretarial tasks, customer support, social media, and education.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
             <Link to="/auth">
-              <Button size="lg" className="gap-2 px-8">
+              <Button size="lg" className="gap-2 px-8 text-lg">
                 Start Free Trial
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
-            <Link to="/pricing">
-              <Button size="lg" variant="outline" className="px-8">
-                View Pricing
-              </Button>
-            </Link>
+            <Button size="lg" variant="outline" className="px-8 text-lg gap-2">
+              <Play className="w-5 h-5" />
+              Watch Demo
+            </Button>
           </div>
-          <p className="text-sm text-muted-foreground mt-4">
+          
+          <p className="text-sm text-muted-foreground mt-6 animate-fade-in" style={{ animationDelay: '0.3s' }}>
             No credit card required · Free 14-day trial · Cancel anytime
           </p>
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* 2️⃣ Features / Solutions Section */}
       <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -155,15 +364,26 @@ export default function Landing() {
               Each agent is specialized for specific tasks, working together to transform your productivity.
             </p>
           </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {features.map((feature) => (
-              <Card key={feature.title} className="glass border-0 hover:shadow-lg transition-all duration-300">
+            {features.map((feature, index) => (
+              <Card 
+                key={feature.title} 
+                className="glass border-0 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
                 <CardContent className="p-8">
                   <div className={`w-14 h-14 rounded-2xl ${feature.bgColor} flex items-center justify-center mb-6`}>
                     <feature.icon className={`w-7 h-7 ${feature.color}`} />
                   </div>
                   <h3 className="text-xl font-semibold text-foreground mb-3">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
+                  <p className="text-muted-foreground mb-4">{feature.description}</p>
+                  <button 
+                    onClick={() => scrollToSection(feature.learnMore.replace('#', ''))}
+                    className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1"
+                  >
+                    Learn More <ArrowRight className="w-4 h-4" />
+                  </button>
                 </CardContent>
               </Card>
             ))}
@@ -171,34 +391,43 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      {/* 3️⃣ Use Cases / Audience Section */}
+      <section id="use-cases" className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
-              Why Teams Choose AI Work Assistant
+              Built for Every Industry
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Built for modern teams that demand efficiency, security, and scalability.
+              Discover how AI Smart Work Assistant solves challenges across different sectors.
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {benefits.map((benefit) => (
-              <div key={benefit.title} className="flex gap-4">
-                <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <benefit.icon className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-1">{benefit.title}</h3>
-                  <p className="text-sm text-muted-foreground">{benefit.description}</p>
-                </div>
-              </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {useCases.map((useCase) => (
+              <Card key={useCase.title} className="glass border-0 hover:shadow-lg transition-all duration-300">
+                <CardContent className="p-8">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
+                    <useCase.icon className="w-7 h-7 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-foreground mb-2">{useCase.title}</h3>
+                  <p className="text-muted-foreground mb-4">{useCase.description}</p>
+                  <ul className="space-y-2">
+                    {useCase.points.map((point, index) => (
+                      <li key={index} className="flex items-start gap-2 text-sm text-foreground">
+                        <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        {point}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* 4️⃣ Testimonials / Social Proof Section */}
       <section id="testimonials" className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -206,21 +435,40 @@ export default function Landing() {
               Loved by Teams Worldwide
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              See how AI Work Assistant is transforming productivity for businesses of all sizes.
+              See how AI Smart Work Assistant is transforming productivity for businesses of all sizes.
             </p>
           </div>
+
+          {/* Company Logos */}
+          <div className="flex flex-wrap justify-center gap-8 mb-16">
+            {companyLogos.map((logo) => (
+              <div 
+                key={logo} 
+                className="px-6 py-3 bg-background/50 rounded-lg text-muted-foreground font-semibold"
+              >
+                {logo}
+              </div>
+            ))}
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {testimonials.map((testimonial) => (
               <Card key={testimonial.author} className="glass border-0">
                 <CardContent className="p-6">
-                  <p className="text-foreground mb-6 italic">"{testimonial.quote}"</p>
+                  {/* Star Rating */}
+                  <div className="flex gap-1 mb-4">
+                    {[...Array(testimonial.rating)].map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                    ))}
+                  </div>
+                  <p className="text-foreground mb-6">"{testimonial.quote}"</p>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary font-semibold text-sm">
                       {testimonial.avatar}
                     </div>
                     <div>
                       <p className="font-semibold text-foreground">{testimonial.author}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                      <p className="text-sm text-muted-foreground">{testimonial.role}, {testimonial.company}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -230,28 +478,99 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
+      {/* 5️⃣ Pricing / Plans Section */}
+      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Choose the plan that fits your team. All plans include a 14-day free trial.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {pricingPlans.map((plan) => (
+              <Card 
+                key={plan.name} 
+                className={`relative ${plan.popular ? 'border-primary shadow-xl scale-105' : 'glass border-0'}`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground text-xs font-medium rounded-full">
+                    Most Popular
+                  </div>
+                )}
+                <CardContent className="p-6">
+                  <h3 className="text-xl font-semibold text-foreground mb-2">{plan.name}</h3>
+                  <p className="text-sm text-muted-foreground mb-4">{plan.description}</p>
+                  <div className="mb-6">
+                    {plan.price !== null ? (
+                      <>
+                        <span className="text-4xl font-bold text-foreground">${plan.price}</span>
+                        <span className="text-muted-foreground">/month</span>
+                      </>
+                    ) : (
+                      <span className="text-2xl font-bold text-foreground">Custom</span>
+                    )}
+                  </div>
+                  <ul className="space-y-3 mb-6">
+                    {plan.features.map((feature, index) => (
+                      <li key={index} className="flex items-start gap-2 text-sm text-foreground">
+                        <CheckCircle2 className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to="/auth">
+                    <Button 
+                      className="w-full" 
+                      variant={plan.popular ? "default" : "outline"}
+                    >
+                      {plan.cta}
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          <p className="text-center text-sm text-muted-foreground mt-8">
+            All prices in USD. Yearly billing available with 17% discount.{" "}
+            <Link to="/pricing" className="text-primary hover:underline">View full comparison →</Link>
+          </p>
+        </div>
+      </section>
+
+      {/* 6️⃣ CTA / Signup Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/30">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
-            Ready to Transform Your Workflow?
+            Start using AI Smart Work Assistant today
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join thousands of teams already using AI Work Assistant to automate their work.
+            Join thousands of teams already automating their work with AI.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto mb-6">
+            <Input 
+              type="email" 
+              placeholder="Enter your email" 
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="flex-1"
+            />
             <Link to="/auth">
-              <Button size="lg" className="gap-2 px-8">
+              <Button size="lg" className="w-full sm:w-auto">
                 Get Started Free
-                <ArrowRight className="w-4 h-4" />
-              </Button>
-            </Link>
-            <Link to="/pricing">
-              <Button size="lg" variant="outline" className="px-8">
-                Compare Plans
               </Button>
             </Link>
           </div>
+          
+          <p className="text-sm text-muted-foreground">
+            No credit card required · Setup in 2 minutes
+          </p>
+          
           <div className="flex flex-wrap justify-center gap-6 mt-10 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-green-500" />
@@ -269,25 +588,198 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 px-4 sm:px-6 lg:px-8 border-t border-border">
+      {/* 7️⃣ FAQ Section */}
+      <section id="faq" className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              Got questions? We've got answers.
+            </p>
+          </div>
+          
+          <Accordion type="single" collapsible className="w-full">
+            {faqs.map((faq, index) => (
+              <AccordionItem key={index} value={`item-${index}`}>
+                <AccordionTrigger className="text-left text-foreground">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+
+      {/* 8️⃣ About / Company Section */}
+      <section id="about" className="py-20 px-4 sm:px-6 lg:px-8 bg-accent/30">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-primary" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-6">
+                Our Mission
+              </h2>
+              <p className="text-lg text-muted-foreground mb-6">
+                We believe everyone deserves access to powerful AI tools that enhance productivity without complexity. 
+                Our mission is to democratize AI for businesses of all sizes, making automation accessible, 
+                affordable, and easy to use.
+              </p>
+              <p className="text-muted-foreground mb-8">
+                Founded in 2024, AI Smart Work Assistant has helped thousands of teams automate their workflows, 
+                save countless hours, and focus on what truly matters — growing their business and serving their customers.
+              </p>
+              <div className="flex gap-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-primary">10K+</div>
+                  <div className="text-sm text-muted-foreground">Active Users</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-primary">5M+</div>
+                  <div className="text-sm text-muted-foreground">Messages Processed</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-primary">99.9%</div>
+                  <div className="text-sm text-muted-foreground">Uptime</div>
+                </div>
               </div>
-              <span className="font-semibold text-foreground">AI Work Assistant</span>
             </div>
+            
+            <div>
+              <h3 className="text-xl font-semibold text-foreground mb-6">Leadership Team</h3>
+              <div className="grid grid-cols-3 gap-6">
+                {team.map((member) => (
+                  <div key={member.name} className="text-center">
+                    <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-lg mx-auto mb-3">
+                      {member.avatar}
+                    </div>
+                    <p className="font-semibold text-foreground text-sm">{member.name}</p>
+                    <p className="text-xs text-muted-foreground">{member.role}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 9️⃣ Footer Section */}
+      <footer id="contact" className="py-16 px-4 sm:px-6 lg:px-8 border-t border-border">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+            {/* Company Info */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                  <Sparkles className="w-6 h-6 text-primary" />
+                </div>
+                <span className="text-xl font-bold text-foreground">AI Smart Work</span>
+              </div>
+              <p className="text-muted-foreground text-sm mb-4">
+                Your AI-powered work assistant platform. Automate tasks, boost productivity, and grow your business smarter.
+              </p>
+              <div className="flex gap-3">
+                <a href="#" className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
+                  <Facebook className="w-5 h-5" />
+                </a>
+                <a href="#" className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
+                  <Instagram className="w-5 h-5" />
+                </a>
+                <a href="#" className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
+                  <Linkedin className="w-5 h-5" />
+                </a>
+                <a href="#" className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-muted-foreground hover:text-primary transition-colors">
+                  <Twitter className="w-5 h-5" />
+                </a>
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Quick Links</h4>
+              <ul className="space-y-3">
+                <li>
+                  <button onClick={() => scrollToSection('features')} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+                    Features
+                  </button>
+                </li>
+                <li>
+                  <button onClick={() => scrollToSection('pricing')} className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+                    Pricing
+                  </button>
+                </li>
+                <li>
+                  <Link to="/auth" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+                    Login
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/auth" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+                    Sign Up
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Legal</h4>
+              <ul className="space-y-3">
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-muted-foreground hover:text-foreground transition-colors text-sm">
+                    Cookie Policy
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h4 className="font-semibold text-foreground mb-4">Contact Us</h4>
+              <ul className="space-y-3">
+                <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <Mail className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>support@aismartwork.com</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <Phone className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>+1 (555) 123-4567</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>123 AI Street, Tech City, TC 12345</span>
+                </li>
+                <li className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <Clock className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>Mon-Fri: 9AM - 6PM EST</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Bottom Bar */}
+          <div className="pt-8 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-sm text-muted-foreground">
+              © 2026 AI Smart Work Assistant. All rights reserved.
+            </p>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link to="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
-              <a href="#features" className="hover:text-foreground transition-colors">Features</a>
               <a href="#" className="hover:text-foreground transition-colors">Privacy</a>
               <a href="#" className="hover:text-foreground transition-colors">Terms</a>
+              <a href="#" className="hover:text-foreground transition-colors">Cookies</a>
             </div>
-            <p className="text-sm text-muted-foreground">
-              © 2024 AI Work Assistant. All rights reserved.
-            </p>
           </div>
         </div>
       </footer>
