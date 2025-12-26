@@ -2,8 +2,9 @@ import { useState, useEffect, useRef } from "react";
 import { 
   Save, X, Calendar, Image, Hash, Send, Eye, Loader2,
   Facebook, Twitter, Instagram, Linkedin, CheckCircle2,
-  Sparkles, Wand2, ImagePlus, Upload
+  Sparkles, Wand2, ImagePlus, Upload, Pencil, Check
 } from "lucide-react";
+import { FlyerEditor } from "./FlyerEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,8 +60,12 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
   const [activeTab, setActiveTab] = useState("edit");
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [generatedFlyerUrl, setGeneratedFlyerUrl] = useState<string | null>(null);
+  const [generatedFlyerUrls, setGeneratedFlyerUrls] = useState<string[]>([]); // For dual generation
+  const [selectedFlyerIndex, setSelectedFlyerIndex] = useState<number>(0);
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [referenceImageFile, setReferenceImageFile] = useState<File | null>(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [editingImageUrl, setEditingImageUrl] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Flyer generation settings
@@ -103,6 +108,8 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
       media_urls: [],
     });
     setGeneratedFlyerUrl(null);
+    setGeneratedFlyerUrls([]);
+    setSelectedFlyerIndex(0);
     setReferenceImage(null);
     setReferenceImageFile(null);
     setFlyerStyle("modern");
@@ -320,6 +327,9 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
     }
 
     setIsGeneratingFlyer(true);
+    setGeneratedFlyerUrls([]);
+    setSelectedFlyerIndex(0);
+    
     try {
       // First get the flyer design prompt
       const { data: promptData, error: promptError } = await supabase.functions.invoke("generate-social-content", {
@@ -334,25 +344,38 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
       if (promptError) throw promptError;
       if (promptData?.error) throw new Error(promptData.error);
 
-      // Now generate the actual image with enhanced settings
-      const { data: imageData, error: imageError } = await supabase.functions.invoke("generate-flyer-image", {
-        body: {
-          prompt: promptData.imagePrompt,
-          headline: promptData.headline,
-          platform: post.platform,
-          referenceImage: referenceImage,
-          style: flyerStyle,
-          orientation: flyerOrientation,
-          colorScheme: flyerColorScheme,
-          textPlacement: flyerTextPlacement,
-        },
-      });
+      // Generate TWO flyer variations in parallel for comparison
+      const generateFlyer = async (variation: number) => {
+        const { data: imageData, error: imageError } = await supabase.functions.invoke("generate-flyer-image", {
+          body: {
+            prompt: promptData.imagePrompt + (variation === 1 ? " Alternative creative interpretation." : ""),
+            headline: promptData.headline,
+            platform: post.platform,
+            referenceImage: referenceImage,
+            style: variation === 0 ? flyerStyle : getAlternativeStyle(flyerStyle),
+            orientation: flyerOrientation,
+            colorScheme: variation === 0 ? flyerColorScheme : getAlternativeColorScheme(flyerColorScheme),
+            textPlacement: flyerTextPlacement,
+          },
+        });
 
-      if (imageError) throw imageError;
-      if (imageData?.error) throw new Error(imageData.error);
+        if (imageError) throw imageError;
+        if (imageData?.error) throw new Error(imageData.error);
+        return imageData.imageUrl;
+      };
 
-      setGeneratedFlyerUrl(imageData.imageUrl);
-      toast.success("Flyer generated! Preview it below.");
+      toast.info("Generating 2 flyer variations for comparison...");
+      
+      // Generate both flyers in parallel
+      const [flyer1, flyer2] = await Promise.all([
+        generateFlyer(0),
+        generateFlyer(1),
+      ]);
+
+      setGeneratedFlyerUrls([flyer1, flyer2]);
+      setGeneratedFlyerUrl(flyer1); // Default to first one
+      setSelectedFlyerIndex(0);
+      toast.success("2 flyer variations generated! Choose your favorite.");
       setActiveTab("preview");
     } catch (error) {
       console.error("Error generating flyer:", error);
@@ -360,6 +383,57 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
     } finally {
       setIsGeneratingFlyer(false);
     }
+  };
+
+  // Helper functions for variation
+  const getAlternativeStyle = (style: string): string => {
+    const alternatives: Record<string, string> = {
+      modern: "bold",
+      bold: "modern",
+      minimal: "elegant",
+      retro: "playful",
+      corporate: "tech",
+      playful: "retro",
+      elegant: "minimal",
+      tech: "corporate",
+    };
+    return alternatives[style] || "bold";
+  };
+
+  const getAlternativeColorScheme = (scheme: string): string => {
+    const alternatives: Record<string, string> = {
+      brand: "gradient",
+      warm: "cool",
+      cool: "warm",
+      monochrome: "neon",
+      pastel: "earth",
+      neon: "monochrome",
+      earth: "pastel",
+      gradient: "brand",
+    };
+    return alternatives[scheme] || "gradient";
+  };
+
+  const handleSelectFlyer = (index: number) => {
+    setSelectedFlyerIndex(index);
+    setGeneratedFlyerUrl(generatedFlyerUrls[index]);
+    toast.success(`Selected flyer ${index + 1}`);
+  };
+
+  const handleEditFlyer = (imageUrl: string) => {
+    setEditingImageUrl(imageUrl);
+    setIsEditorOpen(true);
+  };
+
+  const handleEditorSave = (editedImageUrl: string) => {
+    setGeneratedFlyerUrl(editedImageUrl);
+    // Update the selected flyer in the array too
+    if (generatedFlyerUrls.length > 0) {
+      const newUrls = [...generatedFlyerUrls];
+      newUrls[selectedFlyerIndex] = editedImageUrl;
+      setGeneratedFlyerUrls(newUrls);
+    }
+    setIsEditorOpen(false);
   };
 
   const handleAddHashtag = () => {
@@ -724,14 +798,76 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
                   </div>
                 </div>
                 
-                {/* Generated Flyer Preview */}
-                {generatedFlyerUrl && (
-                  <div className="mb-4 rounded-lg overflow-hidden border">
+                {/* Dual Flyer Comparison */}
+                {generatedFlyerUrls.length === 2 && (
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-sm font-medium">Choose Your Flyer</Label>
+                      <span className="text-xs text-muted-foreground">Click to select, or edit</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {generatedFlyerUrls.map((url, index) => (
+                        <div
+                          key={index}
+                          className={`relative rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${
+                            selectedFlyerIndex === index
+                              ? "border-primary ring-2 ring-primary/20"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                          onClick={() => handleSelectFlyer(index)}
+                        >
+                          {selectedFlyerIndex === index && (
+                            <div className="absolute top-2 left-2 z-10 bg-primary text-primary-foreground rounded-full p-1">
+                              <Check className="w-4 h-4" />
+                            </div>
+                          )}
+                          <img
+                            src={url}
+                            alt={`Flyer option ${index + 1}`}
+                            className="w-full h-auto"
+                          />
+                          <div className="absolute bottom-2 right-2 flex gap-1">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="h-8 gap-1 bg-background/90 hover:bg-background"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditFlyer(url);
+                              }}
+                            >
+                              <Pencil className="w-3 h-3" />
+                              Edit
+                            </Button>
+                          </div>
+                          <div className="absolute top-2 right-2 bg-background/80 text-xs px-2 py-1 rounded">
+                            Option {index + 1}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Single Flyer Preview (fallback) */}
+                {generatedFlyerUrl && generatedFlyerUrls.length < 2 && (
+                  <div className="mb-4 rounded-lg overflow-hidden border relative group">
                     <img 
                       src={generatedFlyerUrl} 
                       alt="Generated flyer" 
                       className="w-full h-auto"
                     />
+                    <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="gap-1 bg-background/90 hover:bg-background"
+                        onClick={() => handleEditFlyer(generatedFlyerUrl)}
+                      >
+                        <Pencil className="w-3 h-3" />
+                        Edit Flyer
+                      </Button>
+                    </div>
                   </div>
                 )}
                 
@@ -783,6 +919,14 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
           </div>
         </div>
       </DialogContent>
+
+      {/* Flyer Editor Modal */}
+      <FlyerEditor
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
+        imageUrl={editingImageUrl}
+        onSave={handleEditorSave}
+      />
     </Dialog>
   );
 }
