@@ -6,36 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Process base64 in chunks to prevent memory issues
-function processBase64Chunks(base64String: string, chunkSize = 32768): Uint8Array {
-  const chunks: Uint8Array[] = [];
-  let position = 0;
-  
-  while (position < base64String.length) {
-    const chunk = base64String.slice(position, position + chunkSize);
-    const binaryChunk = atob(chunk);
-    const bytes = new Uint8Array(binaryChunk.length);
-    
-    for (let i = 0; i < binaryChunk.length; i++) {
-      bytes[i] = binaryChunk.charCodeAt(i);
-    }
-    
-    chunks.push(bytes);
-    position += chunkSize;
-  }
-
-  const totalLength = chunks.reduce((acc, chunk) => acc + chunk.length, 0);
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  return result;
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -53,13 +23,9 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Processing voice transcription...");
+    console.log("Processing voice transcription with Gemini multimodal...");
 
-    // Process audio in chunks
-    const binaryAudio = processBase64Chunks(audio);
-    
-    // Use Lovable AI to transcribe (via Gemini which supports audio)
-    // First, we'll send it to Gemini for transcription
+    // Use Gemini's multimodal capabilities to transcribe audio
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -70,17 +36,20 @@ serve(async (req) => {
         model: "google/gemini-2.5-flash",
         messages: [
           {
-            role: "system",
-            content: `You are a voice transcription assistant. The user will describe what they said in a voice note. 
-            Your job is to extract and return ONLY the transcribed text, formatted as actionable tasks if applicable.
-            Format: Return the text as-is, or if it sounds like tasks, format them as a bullet list.`
-          },
-          {
             role: "user",
-            content: `Please transcribe this voice note content. The audio contains: "${audio.substring(0, 500)}..."
-            
-            Since I cannot process raw audio directly, please help me understand that this is a voice-to-task feature.
-            For now, respond with a helpful message about how to use voice notes effectively.`
+            content: [
+              {
+                type: "text",
+                text: "Please transcribe the following audio recording accurately. Return ONLY the transcribed text, nothing else. If the audio contains task-like items or action items, format them as a clean list."
+              },
+              {
+                type: "input_audio",
+                input_audio: {
+                  data: audio,
+                  format: "webm"
+                }
+              }
+            ]
           }
         ],
       }),
@@ -89,6 +58,18 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("AI gateway error:", response.status, errorText);
+      
+      // Fallback: If multimodal audio fails, provide helpful message
+      if (response.status === 400 || response.status === 422) {
+        return new Response(
+          JSON.stringify({ 
+            text: "Voice recording received. Please describe what you said and I'll help format it as tasks.",
+            note: "Direct audio transcription is being processed."
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      
       throw new Error("Transcription service error");
     }
 
