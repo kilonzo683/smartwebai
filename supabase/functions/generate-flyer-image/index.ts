@@ -11,6 +11,9 @@ interface FlyerRequest {
   headline?: string;
   platform: string;
   style?: string;
+  orientation?: string;
+  colorScheme?: string;
+  textPlacement?: string;
   referenceImage?: string; // Base64 image URL
 }
 
@@ -20,7 +23,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, headline, platform, style, referenceImage } = await req.json() as FlyerRequest;
+    const { prompt, headline, platform, style, orientation, colorScheme, textPlacement, referenceImage } = await req.json() as FlyerRequest;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -33,9 +36,18 @@ serve(async (req) => {
       throw new Error("Supabase configuration missing");
     }
 
-    console.log(`Generating flyer image for platform: ${platform}, has reference: ${!!referenceImage}`);
+    console.log(`Generating flyer image for platform: ${platform}, style: ${style}, orientation: ${orientation}, has reference: ${!!referenceImage}`);
 
-    // Platform-specific dimensions
+    // Orientation-specific dimensions
+    const orientationDimensions: Record<string, { width: number; height: number; aspectText: string }> = {
+      square: { width: 1080, height: 1080, aspectText: "1:1 square format" },
+      portrait: { width: 1080, height: 1350, aspectText: "4:5 portrait format" },
+      landscape: { width: 1920, height: 1080, aspectText: "16:9 landscape format" },
+      story: { width: 1080, height: 1920, aspectText: "9:16 vertical story format" },
+      wide: { width: 1200, height: 600, aspectText: "2:1 wide banner format" },
+    };
+
+    // Platform-specific dimensions (fallback if no orientation specified)
     const platformDimensions: Record<string, { width: number; height: number; aspectText: string }> = {
       instagram: { width: 1080, height: 1080, aspectText: "1:1 square format" },
       facebook: { width: 1200, height: 630, aspectText: "landscape 1200x630 format" },
@@ -44,23 +56,67 @@ serve(async (req) => {
       story: { width: 1080, height: 1920, aspectText: "vertical 9:16 format for stories" },
     };
 
-    const dimensions = platformDimensions[platform] || platformDimensions.instagram;
+    // Use orientation if specified, otherwise fall back to platform defaults
+    const dimensions = orientation ? orientationDimensions[orientation] : platformDimensions[platform] || platformDimensions.instagram;
+    
+    // Style descriptions for enhanced prompts
+    const styleDescriptions: Record<string, string> = {
+      modern: "clean, modern, minimalist with bold typography and ample white space",
+      bold: "bold, vibrant colors, high contrast, impactful design with strong visual elements",
+      minimal: "ultra minimalist, simple geometric shapes, limited color palette, elegant simplicity",
+      retro: "vintage, retro aesthetic with nostalgic elements, warm tones, classic typography",
+      corporate: "professional, corporate, clean lines, trustworthy blue tones, business-appropriate",
+      playful: "fun, playful, bright colors, rounded shapes, friendly and approachable",
+      elegant: "luxury, elegant, sophisticated, premium feel with gold accents and refined typography",
+      tech: "futuristic, tech-inspired, neon accents, dark backgrounds, modern digital aesthetic",
+    };
 
-    // Build comprehensive image prompt
+    // Color scheme descriptions
+    const colorSchemeDescriptions: Record<string, string> = {
+      brand: "using brand-appropriate professional colors",
+      warm: "warm color palette with reds, oranges, and yellows",
+      cool: "cool color palette with blues, teals, and purples",
+      monochrome: "black and white or single-color monochrome scheme",
+      pastel: "soft pastel colors, gentle and calming tones",
+      neon: "vibrant neon colors, electric and eye-catching",
+      earth: "natural earth tones, greens, browns, and beiges",
+      gradient: "beautiful gradient transitions between complementary colors",
+    };
+
+    // Text placement descriptions
+    const textPlacementDescriptions: Record<string, string> = {
+      center: "with main text prominently centered",
+      top: "with headline text positioned at the top",
+      bottom: "with text positioned at the bottom third",
+      left: "with text left-aligned for readability",
+      right: "with text right-aligned for visual balance",
+      overlay: "with text overlaid on the main visual with appropriate contrast",
+    };
+
+    const selectedStyle = styleDescriptions[style || "modern"] || styleDescriptions.modern;
+    const selectedColorScheme = colorSchemeDescriptions[colorScheme || "brand"] || colorSchemeDescriptions.brand;
+    const selectedTextPlacement = textPlacementDescriptions[textPlacement || "center"] || textPlacementDescriptions.center;
+
+    // Build comprehensive image prompt with all settings
     let enhancedPrompt = `Professional social media marketing flyer, ${dimensions.aspectText}. 
 ${prompt}
 ${headline ? `Main headline text: "${headline}"` : ""}
-Style: ${style || "modern, clean, professional, eye-catching"}
+Design style: ${selectedStyle}
+Color scheme: ${selectedColorScheme}
+Text placement: ${selectedTextPlacement}
 High quality, professional graphic design, suitable for ${platform} marketing.
 Ultra high resolution, crisp typography if text included.`;
 
     // If there's a reference image, add instructions to match its style
     if (referenceImage) {
-      enhancedPrompt = `Create a new flyer design that matches the style, layout, and aesthetic of the reference image provided.
+      enhancedPrompt = `Create a new flyer design inspired by the reference image provided.
 ${dimensions.aspectText}.
 ${prompt}
 ${headline ? `Main headline text: "${headline}"` : ""}
-Keep the same visual style, color scheme, typography style, and overall composition as the reference.
+Maintain similar visual style and composition as the reference, but adapt with:
+- Design style: ${selectedStyle}
+- Color scheme: ${selectedColorScheme}
+- Text placement: ${selectedTextPlacement}
 High quality, professional graphic design, suitable for ${platform} marketing.
 Ultra high resolution, crisp typography if text included.`;
     }

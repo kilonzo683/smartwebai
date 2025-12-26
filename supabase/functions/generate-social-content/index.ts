@@ -34,33 +34,36 @@ serve(async (req) => {
     let systemPrompt = "";
     let userPrompt = "";
 
-    const platformLimits: Record<string, number> = {
-      twitter: 280,
-      instagram: 2200,
-      linkedin: 3000,
-      facebook: 63206,
-      tiktok: 2200,
+    // Word limits instead of character limits for richer content
+    const platformWordLimits: Record<string, number> = {
+      twitter: 50,      // Twitter still needs to be concise
+      instagram: 300,   // Full 300 words for Instagram
+      linkedin: 300,    // Full 300 words for LinkedIn
+      facebook: 300,    // Full 300 words for Facebook
+      tiktok: 150,      // Moderate for TikTok captions
     };
 
-    const charLimit = platformLimits[platform] || 280;
+    const wordLimit = platformWordLimits[platform] || 300;
 
     switch (type) {
       case "post":
         systemPrompt = `You are an expert social media content creator. Generate engaging, unique social media posts that drive engagement.
 
 RULES:
-- Create content that matches the platform's style and character limits
-- ${platform === "twitter" ? "Keep under 280 characters including hashtags" : `Keep under ${charLimit} characters`}
+- Create content that matches the platform's style
+- ${platform === "twitter" ? "Keep under 280 characters including hashtags due to Twitter's limit" : `Write approximately ${wordLimit} words of rich, engaging content`}
 - Use emojis appropriately for the platform
 - Make it engaging and action-oriented
 - Include a clear call-to-action when relevant
+- Structure with paragraphs for readability (use line breaks)
+- Include storytelling elements where appropriate
 ${brandVoice ? `- Match this brand voice: ${brandVoice}` : ""}
 ${keyTopics?.length ? `- Incorporate these topics naturally: ${keyTopics.join(", ")}` : ""}
 ${tone ? `- Tone should be: ${tone}` : ""}
 
 Return ONLY the post content, no explanations or quotes.`;
 
-        userPrompt = `Create a unique, engaging ${platform} ${postType || "post"} about: "${title}"`;
+        userPrompt = `Create a unique, engaging ${platform} ${postType || "post"} with approximately ${wordLimit} words about: "${title}"`;
         break;
 
       case "hashtags":

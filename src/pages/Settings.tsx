@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { 
   User, Bell, Shield, Palette, Moon, Sun, LogOut, Loader2, Save, Camera,
-  Building2, Globe, Settings2, Key, Lock, Smartphone, History, Download, Eye, EyeOff
+  Building2, Globe, Settings2, Key, Lock, Smartphone, History, Download, Eye, EyeOff, Share2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,6 +20,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRole } from "@/contexts/RoleContext";
 import { SystemSettings } from "@/components/settings/SystemSettings";
 import { OrganizationSettings } from "@/components/settings/OrganizationSettings";
+import { SocialMediaConnections } from "@/components/settings/SocialMediaConnections";
 
 type SettingsLevel = "system" | "organization" | "user";
 
@@ -489,6 +490,10 @@ export default function Settings() {
               <TabsTrigger value="ai" className="gap-2">
                 <Settings2 className="w-4 h-4" />
                 <span className="hidden sm:inline">AI</span>
+              </TabsTrigger>
+              <TabsTrigger value="social" className="gap-2">
+                <Share2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Social Media</span>
               </TabsTrigger>
             </TabsList>
 
@@ -971,6 +976,21 @@ export default function Settings() {
                     )}
                     Save AI Settings
                   </Button>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Social Media Connections Tab */}
+            <TabsContent value="social" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Social Media Connections</CardTitle>
+                  <CardDescription>
+                    Connect and manage your social media accounts for AI-powered content management
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SocialMediaConnections />
                 </CardContent>
               </Card>
             </TabsContent>

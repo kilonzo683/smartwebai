@@ -63,6 +63,12 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
   const [referenceImageFile, setReferenceImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
+  // Flyer generation settings
+  const [flyerStyle, setFlyerStyle] = useState<string>("modern");
+  const [flyerOrientation, setFlyerOrientation] = useState<string>("square");
+  const [flyerColorScheme, setFlyerColorScheme] = useState<string>("brand");
+  const [flyerTextPlacement, setFlyerTextPlacement] = useState<string>("center");
+  
   const [post, setPost] = useState<PostData>({
     title: "",
     content: "",
@@ -99,6 +105,10 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
     setGeneratedFlyerUrl(null);
     setReferenceImage(null);
     setReferenceImageFile(null);
+    setFlyerStyle("modern");
+    setFlyerOrientation("square");
+    setFlyerColorScheme("brand");
+    setFlyerTextPlacement("center");
   };
 
   const handleReferenceImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -324,13 +334,17 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
       if (promptError) throw promptError;
       if (promptData?.error) throw new Error(promptData.error);
 
-      // Now generate the actual image (with optional reference image)
+      // Now generate the actual image with enhanced settings
       const { data: imageData, error: imageError } = await supabase.functions.invoke("generate-flyer-image", {
         body: {
           prompt: promptData.imagePrompt,
           headline: promptData.headline,
           platform: post.platform,
-          referenceImage: referenceImage, // Pass the base64 reference image if available
+          referenceImage: referenceImage,
+          style: flyerStyle,
+          orientation: flyerOrientation,
+          colorScheme: flyerColorScheme,
+          textPlacement: flyerTextPlacement,
         },
       });
 
@@ -489,6 +503,84 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
                   )}
                   Generate Flyer
                 </Button>
+              </div>
+
+              {/* Flyer Settings */}
+              <div className="space-y-4 p-4 rounded-lg border bg-muted/30">
+                <h4 className="text-sm font-medium">Flyer Settings</h4>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Style</Label>
+                    <Select value={flyerStyle} onValueChange={setFlyerStyle}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="modern">Modern & Clean</SelectItem>
+                        <SelectItem value="bold">Bold & Vibrant</SelectItem>
+                        <SelectItem value="minimal">Minimalist</SelectItem>
+                        <SelectItem value="retro">Retro/Vintage</SelectItem>
+                        <SelectItem value="corporate">Corporate/Professional</SelectItem>
+                        <SelectItem value="playful">Playful & Fun</SelectItem>
+                        <SelectItem value="elegant">Elegant & Luxury</SelectItem>
+                        <SelectItem value="tech">Tech/Futuristic</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Orientation</Label>
+                    <Select value={flyerOrientation} onValueChange={setFlyerOrientation}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="square">Square (1:1)</SelectItem>
+                        <SelectItem value="portrait">Portrait (4:5)</SelectItem>
+                        <SelectItem value="landscape">Landscape (16:9)</SelectItem>
+                        <SelectItem value="story">Story (9:16)</SelectItem>
+                        <SelectItem value="wide">Wide Banner (2:1)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Color Scheme</Label>
+                    <Select value={flyerColorScheme} onValueChange={setFlyerColorScheme}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="brand">Brand Colors</SelectItem>
+                        <SelectItem value="warm">Warm Tones</SelectItem>
+                        <SelectItem value="cool">Cool Tones</SelectItem>
+                        <SelectItem value="monochrome">Monochrome</SelectItem>
+                        <SelectItem value="pastel">Pastel</SelectItem>
+                        <SelectItem value="neon">Neon/Bold</SelectItem>
+                        <SelectItem value="earth">Earth Tones</SelectItem>
+                        <SelectItem value="gradient">Gradient</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Text Placement</Label>
+                    <Select value={flyerTextPlacement} onValueChange={setFlyerTextPlacement}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="center">Center</SelectItem>
+                        <SelectItem value="top">Top</SelectItem>
+                        <SelectItem value="bottom">Bottom</SelectItem>
+                        <SelectItem value="left">Left Aligned</SelectItem>
+                        <SelectItem value="right">Right Aligned</SelectItem>
+                        <SelectItem value="overlay">Text Overlay</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
 
               {/* Reference Image Upload */}
