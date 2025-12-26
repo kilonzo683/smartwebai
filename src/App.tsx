@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { SidebarProvider } from "@/contexts/SidebarContext";
+import { BrandingProvider } from "@/contexts/BrandingContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -40,62 +41,64 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <RoleProvider>
-          <OrganizationProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/landing" element={<Landing />} />
-                <Route path="/pricing" element={<Pricing />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/accept-invite" element={<AcceptInvite />} />
-                <Route path="/onboarding" element={
-                  <ProtectedRoute>
-                    <Onboarding />
-                  </ProtectedRoute>
-                } />
-                <Route
-                  element={
+      <BrandingProvider>
+        <AuthProvider>
+          <RoleProvider>
+            <OrganizationProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/landing" element={<Landing />} />
+                  <Route path="/pricing" element={<Pricing />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/accept-invite" element={<AcceptInvite />} />
+                  <Route path="/onboarding" element={
                     <ProtectedRoute>
-                      <SidebarProvider>
-                        <AppLayout />
-                      </SidebarProvider>
+                      <Onboarding />
                     </ProtectedRoute>
-                  }
-                >
-                  <Route path="/" element={<Index />} />
-                  <Route path="/secretary" element={<SecretaryAgent />} />
-                  <Route path="/support" element={<SupportAgent />} />
-                  <Route path="/social" element={<SocialAgent />} />
-                  <Route path="/lecturer" element={<LecturerAgent />} />
-                  <Route path="/student-quiz" element={<StudentQuiz />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/organizations" element={<Organizations />} />
-                  <Route path="/tickets" element={<Tickets />} />
-                  <Route path="/channels" element={<Channels />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/billing" element={<Billing />} />
-                  <Route path="/security" element={<Security />} />
-                  <Route path="/roles-permissions" element={<RolesPermissions />} />
+                  } />
                   <Route
-                    path="/admin"
                     element={
-                      <AdminRoute>
-                        <AdminDashboard />
-                      </AdminRoute>
+                      <ProtectedRoute>
+                        <SidebarProvider>
+                          <AppLayout />
+                        </SidebarProvider>
+                      </ProtectedRoute>
                     }
-                  />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </OrganizationProvider>
-        </RoleProvider>
-      </AuthProvider>
+                  >
+                    <Route path="/" element={<Index />} />
+                    <Route path="/secretary" element={<SecretaryAgent />} />
+                    <Route path="/support" element={<SupportAgent />} />
+                    <Route path="/social" element={<SocialAgent />} />
+                    <Route path="/lecturer" element={<LecturerAgent />} />
+                    <Route path="/student-quiz" element={<StudentQuiz />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/organizations" element={<Organizations />} />
+                    <Route path="/tickets" element={<Tickets />} />
+                    <Route path="/channels" element={<Channels />} />
+                    <Route path="/analytics" element={<Analytics />} />
+                    <Route path="/billing" element={<Billing />} />
+                    <Route path="/security" element={<Security />} />
+                    <Route path="/roles-permissions" element={<RolesPermissions />} />
+                    <Route
+                      path="/admin"
+                      element={
+                        <AdminRoute>
+                          <AdminDashboard />
+                        </AdminRoute>
+                      }
+                    />
+                  </Route>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </OrganizationProvider>
+          </RoleProvider>
+        </AuthProvider>
+      </BrandingProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
