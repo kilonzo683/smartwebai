@@ -989,6 +989,77 @@ export type Database = {
           },
         ]
       }
+      resume_versions: {
+        Row: {
+          created_at: string
+          id: string
+          resume_id: string
+          snapshot: Json
+          title: string
+          version_number: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resume_id: string
+          snapshot: Json
+          title: string
+          version_number?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resume_id?: string
+          snapshot?: Json
+          title?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resume_versions_resume_id_fkey"
+            columns: ["resume_id"]
+            isOneToOne: false
+            referencedRelation: "resumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resumes: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          section_order: string[]
+          status: string
+          template: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          section_order?: string[]
+          status?: string
+          template?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          section_order?: string[]
+          status?: string
+          template?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       secretary_calendar_events: {
         Row: {
           attendees: string[] | null
