@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { 
   Save, X, Calendar, Image, Hash, Send, Eye, Loader2,
   Facebook, Twitter, Instagram, Linkedin, CheckCircle2,
-  Sparkles, Wand2, ImagePlus
+  Sparkles, Wand2, ImagePlus, Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +59,9 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
   const [activeTab, setActiveTab] = useState("edit");
   const [brandProfile, setBrandProfile] = useState<BrandProfile | null>(null);
   const [generatedFlyerUrl, setGeneratedFlyerUrl] = useState<string | null>(null);
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
+  const [referenceImageFile, setReferenceImageFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [post, setPost] = useState<PostData>({
     title: "",
@@ -94,6 +97,40 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
       media_urls: [],
     });
     setGeneratedFlyerUrl(null);
+    setReferenceImage(null);
+    setReferenceImageFile(null);
+  };
+
+  const handleReferenceImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setReferenceImageFile(file);
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setReferenceImage(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+    toast.success("Reference image uploaded! AI will use this as inspiration.");
+  };
+
+  const removeReferenceImage = () => {
+    setReferenceImage(null);
+    setReferenceImageFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const fetchBrandProfile = async () => {
@@ -287,12 +324,13 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
       if (promptError) throw promptError;
       if (promptData?.error) throw new Error(promptData.error);
 
-      // Now generate the actual image
+      // Now generate the actual image (with optional reference image)
       const { data: imageData, error: imageError } = await supabase.functions.invoke("generate-flyer-image", {
         body: {
           prompt: promptData.imagePrompt,
           headline: promptData.headline,
           platform: post.platform,
+          referenceImage: referenceImage, // Pass the base64 reference image if available
         },
       });
 
@@ -451,6 +489,49 @@ export function PostEditor({ isOpen, onClose, postId, onSaved }: PostEditorProps
                   )}
                   Generate Flyer
                 </Button>
+              </div>
+
+              {/* Reference Image Upload */}
+              <div className="space-y-2">
+                <Label>Reference Image (Optional)</Label>
+                <p className="text-xs text-muted-foreground">
+                  Upload a design for the AI to use as inspiration
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleReferenceImageUpload}
+                  className="hidden"
+                />
+                {referenceImage ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={referenceImage}
+                      alt="Reference design"
+                      className="w-32 h-32 object-cover rounded-lg border"
+                    />
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6"
+                      onClick={removeReferenceImage}
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="gap-2"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload Reference
+                  </Button>
+                )}
+
               </div>
 
               {/* Content */}

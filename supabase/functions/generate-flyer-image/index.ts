@@ -11,6 +11,7 @@ interface FlyerRequest {
   headline?: string;
   platform: string;
   style?: string;
+  referenceImage?: string; // Base64 image URL
 }
 
 serve(async (req) => {
@@ -19,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, headline, platform, style } = await req.json() as FlyerRequest;
+    const { prompt, headline, platform, style, referenceImage } = await req.json() as FlyerRequest;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -32,7 +33,7 @@ serve(async (req) => {
       throw new Error("Supabase configuration missing");
     }
 
-    console.log(`Generating flyer image for platform: ${platform}`);
+    console.log(`Generating flyer image for platform: ${platform}, has reference: ${!!referenceImage}`);
 
     // Platform-specific dimensions
     const platformDimensions: Record<string, { width: number; height: number; aspectText: string }> = {
@@ -46,14 +47,43 @@ serve(async (req) => {
     const dimensions = platformDimensions[platform] || platformDimensions.instagram;
 
     // Build comprehensive image prompt
-    const enhancedPrompt = `Professional social media marketing flyer, ${dimensions.aspectText}. 
+    let enhancedPrompt = `Professional social media marketing flyer, ${dimensions.aspectText}. 
 ${prompt}
 ${headline ? `Main headline text: "${headline}"` : ""}
 Style: ${style || "modern, clean, professional, eye-catching"}
 High quality, professional graphic design, suitable for ${platform} marketing.
 Ultra high resolution, crisp typography if text included.`;
 
+    // If there's a reference image, add instructions to match its style
+    if (referenceImage) {
+      enhancedPrompt = `Create a new flyer design that matches the style, layout, and aesthetic of the reference image provided.
+${dimensions.aspectText}.
+${prompt}
+${headline ? `Main headline text: "${headline}"` : ""}
+Keep the same visual style, color scheme, typography style, and overall composition as the reference.
+High quality, professional graphic design, suitable for ${platform} marketing.
+Ultra high resolution, crisp typography if text included.`;
+    }
+
     console.log("Image generation prompt:", enhancedPrompt);
+
+    // Build the message content
+    const messageContent: any[] = [
+      {
+        type: "text",
+        text: enhancedPrompt,
+      },
+    ];
+
+    // Add reference image if provided
+    if (referenceImage) {
+      messageContent.push({
+        type: "image_url",
+        image_url: {
+          url: referenceImage,
+        },
+      });
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -66,7 +96,7 @@ Ultra high resolution, crisp typography if text included.`;
         messages: [
           {
             role: "user",
-            content: enhancedPrompt,
+            content: messageContent,
           },
         ],
         modalities: ["image", "text"],
@@ -155,6 +185,7 @@ Ultra high resolution, crisp typography if text included.`;
       imageUrl: publicUrl,
       description: textResponse,
       platform,
+      usedReference: !!referenceImage,
       generatedAt: new Date().toISOString(),
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
