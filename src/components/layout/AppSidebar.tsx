@@ -6,6 +6,7 @@ import {
   HeadphonesIcon, 
   Share2, 
   GraduationCap,
+  FileText,
   BookOpen,
   Settings,
   Shield,
@@ -101,6 +102,13 @@ const agents = [
     icon: Lock,
     path: "/security",
     color: "text-red-500",
+  },
+  {
+    id: "resumes",
+    name: "Resume Builder",
+    icon: FileText,
+    path: "/resumes",
+    color: "text-indigo-500",
   },
 ];
 
