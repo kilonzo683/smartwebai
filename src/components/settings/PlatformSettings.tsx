@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Globe, Settings2, Shield, Zap, Save, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Globe, Settings2, Shield, Zap, Save, Loader2, Upload, Image, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +50,15 @@ interface WhiteLabelConfig {
   custom_email_footer: string;
 }
 
+interface BrandingConfig {
+  logo_url: string;
+  favicon_url: string;
+  hero_image_url: string;
+  tagline: string;
+  primary_color: string;
+  secondary_color: string;
+}
+
 export function PlatformSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -88,6 +97,21 @@ export function PlatformSettings() {
     custom_email_footer: "",
   });
 
+  const [brandingConfig, setBrandingConfig] = useState<BrandingConfig>({
+    logo_url: "",
+    favicon_url: "",
+    hero_image_url: "",
+    tagline: "AI-Powered Work Assistant",
+    primary_color: "#8B5CF6",
+    secondary_color: "#6366F1",
+  });
+
+  const [isUploading, setIsUploading] = useState<{ [key: string]: boolean }>({});
+  
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const faviconInputRef = useRef<HTMLInputElement>(null);
+  const heroInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     fetchSettings();
   }, []);
@@ -115,6 +139,9 @@ export function PlatformSettings() {
           case "white_label_config":
             setWhiteLabelConfig(prev => ({ ...prev, ...value }));
             break;
+          case "branding_config":
+            setBrandingConfig(prev => ({ ...prev, ...value }));
+            break;
         }
       });
     } catch (error) {
@@ -141,6 +168,76 @@ export function PlatformSettings() {
     }
   };
 
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+    imageType: "logo" | "favicon" | "hero"
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
+      return;
+    }
+
+    const maxSize = imageType === "hero" ? 10 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error(`File too large. Max size: ${imageType === "hero" ? "10MB" : "5MB"}`);
+      return;
+    }
+
+    setIsUploading(prev => ({ ...prev, [imageType]: true }));
+
+    try {
+      const fileExt = file.name.split(".").pop();
+      const filePath = `platform/${imageType}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("platform-assets")
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("platform-assets")
+        .getPublicUrl(filePath);
+
+      const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`;
+
+      setBrandingConfig(prev => ({
+        ...prev,
+        [`${imageType}_url`]: imageType === "hero" ? "hero_image_url" : `${imageType}_url`,
+      }));
+
+      // Update the correct field based on imageType
+      if (imageType === "logo") {
+        setBrandingConfig(prev => ({ ...prev, logo_url: urlWithTimestamp }));
+      } else if (imageType === "favicon") {
+        setBrandingConfig(prev => ({ ...prev, favicon_url: urlWithTimestamp }));
+      } else if (imageType === "hero") {
+        setBrandingConfig(prev => ({ ...prev, hero_image_url: urlWithTimestamp }));
+      }
+
+      toast.success(`${imageType.charAt(0).toUpperCase() + imageType.slice(1)} uploaded successfully`);
+    } catch (error) {
+      console.error(`Error uploading ${imageType}:`, error);
+      toast.error(`Failed to upload ${imageType}`);
+    } finally {
+      setIsUploading(prev => ({ ...prev, [imageType]: false }));
+    }
+  };
+
+  const handleRemoveImage = (imageType: "logo" | "favicon" | "hero") => {
+    if (imageType === "logo") {
+      setBrandingConfig(prev => ({ ...prev, logo_url: "" }));
+    } else if (imageType === "favicon") {
+      setBrandingConfig(prev => ({ ...prev, favicon_url: "" }));
+    } else if (imageType === "hero") {
+      setBrandingConfig(prev => ({ ...prev, hero_image_url: "" }));
+    }
+    toast.success(`${imageType.charAt(0).toUpperCase() + imageType.slice(1)} removed`);
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -151,25 +248,266 @@ export function PlatformSettings() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="platform" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="branding" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="branding" className="gap-2">
+            <Image className="w-4 h-4" />
+            <span className="hidden sm:inline">Branding</span>
+          </TabsTrigger>
           <TabsTrigger value="platform" className="gap-2">
             <Globe className="w-4 h-4" />
-            Platform
+            <span className="hidden sm:inline">Platform</span>
           </TabsTrigger>
           <TabsTrigger value="ai" className="gap-2">
             <Zap className="w-4 h-4" />
-            AI Controls
+            <span className="hidden sm:inline">AI</span>
           </TabsTrigger>
           <TabsTrigger value="security" className="gap-2">
             <Shield className="w-4 h-4" />
-            Security
+            <span className="hidden sm:inline">Security</span>
           </TabsTrigger>
           <TabsTrigger value="whitelabel" className="gap-2">
             <Settings2 className="w-4 h-4" />
-            White-Label
+            <span className="hidden sm:inline">White-Label</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* Branding Configuration */}
+        <TabsContent value="branding" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Logo & Branding</CardTitle>
+              <CardDescription>Upload your logo, favicon, and customize brand colors</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Logo Upload */}
+              <div className="space-y-3">
+                <Label>Platform Logo</Label>
+                <div className="flex items-center gap-4">
+                  <div className="w-32 h-32 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50">
+                    {brandingConfig.logo_url ? (
+                      <img
+                        src={brandingConfig.logo_url}
+                        alt="Platform Logo"
+                        className="w-full h-full object-contain p-2"
+                      />
+                    ) : (
+                      <div className="text-center text-muted-foreground">
+                        <Upload className="w-8 h-8 mx-auto mb-1" />
+                        <span className="text-xs">No logo</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => logoInputRef.current?.click()}
+                      disabled={isUploading.logo}
+                    >
+                      {isUploading.logo ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4 mr-2" />
+                      )}
+                      Upload Logo
+                    </Button>
+                    {brandingConfig.logo_url && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveImage("logo")}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Remove
+                      </Button>
+                    )}
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, "logo")}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Recommended: 200x200px, PNG or SVG
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Favicon Upload */}
+              <div className="space-y-3">
+                <Label>Favicon</Label>
+                <div className="flex items-center gap-4">
+                  <div className="w-16 h-16 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50">
+                    {brandingConfig.favicon_url ? (
+                      <img
+                        src={brandingConfig.favicon_url}
+                        alt="Favicon"
+                        className="w-full h-full object-contain p-1"
+                      />
+                    ) : (
+                      <div className="text-center text-muted-foreground">
+                        <Image className="w-4 h-4 mx-auto" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => faviconInputRef.current?.click()}
+                      disabled={isUploading.favicon}
+                    >
+                      {isUploading.favicon ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4 mr-2" />
+                      )}
+                      Upload Favicon
+                    </Button>
+                    {brandingConfig.favicon_url && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveImage("favicon")}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Remove
+                      </Button>
+                    )}
+                    <input
+                      ref={faviconInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, "favicon")}
+                      className="hidden"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      32x32px or 64x64px, ICO or PNG
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Hero Image Upload */}
+              <div className="space-y-3">
+                <Label>Homepage Hero Image</Label>
+                <div className="space-y-3">
+                  <div className="w-full h-48 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50">
+                    {brandingConfig.hero_image_url ? (
+                      <img
+                        src={brandingConfig.hero_image_url}
+                        alt="Hero Image"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center text-muted-foreground">
+                        <Image className="w-12 h-12 mx-auto mb-2" />
+                        <span className="text-sm">No hero image uploaded</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => heroInputRef.current?.click()}
+                      disabled={isUploading.hero}
+                    >
+                      {isUploading.hero ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Upload className="w-4 h-4 mr-2" />
+                      )}
+                      Upload Hero Image
+                    </Button>
+                    {brandingConfig.hero_image_url && (
+                      <Button
+                        variant="ghost"
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => handleRemoveImage("hero")}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  <input
+                    ref={heroInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, "hero")}
+                    className="hidden"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Recommended: 1920x1080px, JPG or PNG. Max 10MB.
+                  </p>
+                </div>
+              </div>
+
+              {/* Tagline */}
+              <div className="space-y-2">
+                <Label htmlFor="tagline">Tagline</Label>
+                <Input
+                  id="tagline"
+                  value={brandingConfig.tagline}
+                  onChange={(e) => setBrandingConfig(prev => ({ ...prev, tagline: e.target.value }))}
+                  placeholder="Your platform tagline"
+                />
+              </div>
+
+              {/* Brand Colors */}
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="primaryColor">Primary Color</Label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      id="primaryColor"
+                      value={brandingConfig.primary_color}
+                      onChange={(e) => setBrandingConfig(prev => ({ ...prev, primary_color: e.target.value }))}
+                      className="w-12 h-10 rounded cursor-pointer border border-border"
+                    />
+                    <Input
+                      value={brandingConfig.primary_color}
+                      onChange={(e) => setBrandingConfig(prev => ({ ...prev, primary_color: e.target.value }))}
+                      placeholder="#8B5CF6"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="secondaryColor">Secondary Color</Label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      id="secondaryColor"
+                      value={brandingConfig.secondary_color}
+                      onChange={(e) => setBrandingConfig(prev => ({ ...prev, secondary_color: e.target.value }))}
+                      className="w-12 h-10 rounded cursor-pointer border border-border"
+                    />
+                    <Input
+                      value={brandingConfig.secondary_color}
+                      onChange={(e) => setBrandingConfig(prev => ({ ...prev, secondary_color: e.target.value }))}
+                      placeholder="#6366F1"
+                      className="flex-1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Button 
+                onClick={() => saveSettings("branding_config", brandingConfig as unknown as Json)} 
+                disabled={isSaving}
+              >
+                {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                Save Branding Settings
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Platform Configuration */}
         <TabsContent value="platform" className="space-y-4">
