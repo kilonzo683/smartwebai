@@ -1,27 +1,12 @@
 import { useState, useEffect } from "react";
-import { Calendar, Plus, Edit2, Trash2, Loader2, Clock, Check, Send, Eye } from "lucide-react";
+import { Calendar, Plus, Edit2, Trash2, Loader2, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
 import { format, startOfWeek, addDays, isSameDay } from "date-fns";
+import { PostEditor } from "./PostEditor";
 
 interface ContentPost {
   id: string;
@@ -55,20 +40,9 @@ export function ContentCalendar() {
   const [posts, setPosts] = useState<ContentPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [editingPost, setEditingPost] = useState<ContentPost | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+  const [showPostEditor, setShowPostEditor] = useState(false);
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const { user } = useAuth();
-
-  const [formData, setFormData] = useState({
-    title: "",
-    content: "",
-    platform: "twitter",
-    post_type: "post",
-    hashtags: "",
-    scheduled_at: "",
-    status: "draft",
-  });
 
   const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
@@ -93,47 +67,6 @@ export function ContentCalendar() {
       console.error("Error fetching posts:", error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleSave = async () => {
-    if (!formData.title.trim() || !user) return;
-
-    setIsSaving(true);
-    try {
-      const postData = {
-        user_id: user.id,
-        title: formData.title,
-        content: formData.content || null,
-        platform: formData.platform,
-        post_type: formData.post_type,
-        hashtags: formData.hashtags.split(",").map(h => h.trim()).filter(Boolean),
-        scheduled_at: formData.scheduled_at || null,
-        status: formData.status,
-      };
-
-      if (editingPost) {
-        const { error } = await supabase
-          .from("social_content_calendar")
-          .update(postData)
-          .eq("id", editingPost.id);
-        if (error) throw error;
-        toast({ title: "Post updated" });
-      } else {
-        const { error } = await supabase
-          .from("social_content_calendar")
-          .insert(postData);
-        if (error) throw error;
-        toast({ title: "Post created", description: "Added to content calendar" });
-      }
-
-      resetForm();
-      fetchPosts();
-    } catch (error) {
-      console.error("Error saving post:", error);
-      toast({ title: "Error", description: "Failed to save post", variant: "destructive" });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -170,32 +103,18 @@ export function ContentCalendar() {
     }
   };
 
-  const resetForm = () => {
-    setShowCreateDialog(false);
-    setEditingPost(null);
-    setFormData({
-      title: "",
-      content: "",
-      platform: "twitter",
-      post_type: "post",
-      hashtags: "",
-      scheduled_at: "",
-      status: "draft",
-    });
+  const openCreatePost = () => {
+    setEditingPostId(null);
+    setShowPostEditor(true);
   };
 
-  const openEdit = (post: ContentPost) => {
-    setEditingPost(post);
-    setFormData({
-      title: post.title,
-      content: post.content || "",
-      platform: post.platform,
-      post_type: post.post_type,
-      hashtags: post.hashtags.join(", "),
-      scheduled_at: post.scheduled_at ? post.scheduled_at.slice(0, 16) : "",
-      status: post.status,
-    });
-    setShowCreateDialog(true);
+  const openEditPost = (postId: string) => {
+    setEditingPostId(postId);
+    setShowPostEditor(true);
+  };
+
+  const handlePostSaved = () => {
+    fetchPosts();
   };
 
   const getPostsForDay = (date: Date) => {
@@ -213,7 +132,7 @@ export function ContentCalendar() {
           <Calendar className="w-4 h-4 text-agent-social" />
           <h3 className="text-sm font-medium">Content Calendar</h3>
         </div>
-        <Button size="sm" variant="outline" onClick={() => setShowCreateDialog(true)}>
+        <Button size="sm" variant="outline" onClick={openCreatePost}>
           <Plus className="w-3 h-3 mr-1" />
           Add
         </Button>
@@ -246,7 +165,7 @@ export function ContentCalendar() {
                       <div
                         key={post.id}
                         className="text-xs px-1 py-0.5 rounded bg-background/50 truncate cursor-pointer hover:bg-background"
-                        onClick={() => openEdit(post)}
+                        onClick={() => openEditPost(post.id)}
                         title={post.title}
                       >
                         {getPlatformIcon(post.platform)} {post.title.slice(0, 8)}
@@ -293,7 +212,7 @@ export function ContentCalendar() {
                         <Check className="w-3 h-3 text-green-500" />
                       </Button>
                     )}
-                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(post)}>
+                    <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditPost(post.id)}>
                       <Edit2 className="w-3 h-3" />
                     </Button>
                     <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleDelete(post.id)}>
@@ -310,90 +229,13 @@ export function ContentCalendar() {
         </div>
       )}
 
-      {/* Create/Edit Dialog */}
-      <Dialog open={showCreateDialog} onOpenChange={resetForm}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>{editingPost ? "Edit Post" : "Schedule New Post"}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Title *</label>
-              <Input
-                placeholder="Post title"
-                value={formData.title}
-                onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Content</label>
-              <Textarea
-                placeholder="Write your post content..."
-                value={formData.content}
-                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
-                rows={4}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Platform</label>
-                <Select
-                  value={formData.platform}
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, platform: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PLATFORMS.map(p => (
-                      <SelectItem key={p.value} value={p.value}>{p.icon} {p.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium mb-1.5 block">Status</label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="pending_approval">Pending Approval</SelectItem>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="scheduled">Scheduled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Schedule For</label>
-              <Input
-                type="datetime-local"
-                value={formData.scheduled_at}
-                onChange={(e) => setFormData(prev => ({ ...prev, scheduled_at: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1.5 block">Hashtags (comma-separated)</label>
-              <Input
-                placeholder="#marketing, #socialmedia, #growth"
-                value={formData.hashtags}
-                onChange={(e) => setFormData(prev => ({ ...prev, hashtags: e.target.value }))}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={resetForm}>Cancel</Button>
-            <Button onClick={handleSave} disabled={isSaving || !formData.title.trim()}>
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : editingPost ? "Update" : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Post Editor Dialog */}
+      <PostEditor
+        isOpen={showPostEditor}
+        onClose={() => setShowPostEditor(false)}
+        postId={editingPostId}
+        onSaved={handlePostSaved}
+      />
     </div>
   );
 }
