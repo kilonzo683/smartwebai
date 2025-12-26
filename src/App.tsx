@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { OrganizationProvider } from "@/contexts/OrganizationContext";
+import { SidebarProvider } from "@/contexts/SidebarContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -60,7 +61,9 @@ const App = () => (
                 <Route
                   element={
                     <ProtectedRoute>
-                      <AppLayout />
+                      <SidebarProvider>
+                        <AppLayout />
+                      </SidebarProvider>
                     </ProtectedRoute>
                   }
                 >
