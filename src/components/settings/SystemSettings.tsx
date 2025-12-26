@@ -290,27 +290,45 @@ export function SystemSettings() {
       const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`;
       console.log(`${imageType} uploaded, URL: ${urlWithTimestamp}`);
 
-      // Get fresh state to avoid stale closure issues
-      const currentSettings = { ...brandingSettings };
+      // First, fetch the current branding settings from database to avoid stale state
+      const { data: currentData } = await supabase
+        .from("platform_settings")
+        .select("value")
+        .eq("key", "branding_settings")
+        .single();
+
+      // Merge with defaults and current DB state
+      const currentDbSettings = currentData?.value as Record<string, unknown> | null;
+      const updatedSettings: BrandingSettings = {
+        logo_url: (currentDbSettings?.logo_url as string) || "",
+        mobile_logo_url: (currentDbSettings?.mobile_logo_url as string) || "",
+        favicon_url: (currentDbSettings?.favicon_url as string) || "",
+        hero_image_url: (currentDbSettings?.hero_image_url as string) || "",
+        tagline: (currentDbSettings?.tagline as string) || "AI-Powered Work Assistant",
+        primary_color: (currentDbSettings?.primary_color as string) || "#8B5CF6",
+        secondary_color: (currentDbSettings?.secondary_color as string) || "#6366F1",
+      };
+
+      // Apply the new image URL
       if (imageType === "logo") {
-        currentSettings.logo_url = urlWithTimestamp;
+        updatedSettings.logo_url = urlWithTimestamp;
       } else if (imageType === "mobile_logo") {
-        currentSettings.mobile_logo_url = urlWithTimestamp;
+        updatedSettings.mobile_logo_url = urlWithTimestamp;
       } else if (imageType === "favicon") {
-        currentSettings.favicon_url = urlWithTimestamp;
+        updatedSettings.favicon_url = urlWithTimestamp;
       } else if (imageType === "hero") {
-        currentSettings.hero_image_url = urlWithTimestamp;
+        updatedSettings.hero_image_url = urlWithTimestamp;
       }
       
-      setBrandingSettings(currentSettings);
+      setBrandingSettings(updatedSettings);
 
-      // Auto-save to database immediately after upload
-      console.log("Saving branding settings to database...", currentSettings);
+      // Save to database
+      console.log("Saving branding settings to database...", updatedSettings);
       const { error: saveError } = await supabase
         .from("platform_settings")
         .upsert({ 
           key: "branding_settings", 
-          value: currentSettings, 
+          value: updatedSettings as unknown as Json, 
           updated_at: new Date().toISOString() 
         }, { onConflict: "key" });
 
