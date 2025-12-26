@@ -5,7 +5,9 @@ import {
   ArrowRight, CheckCircle2, Zap, Shield, BarChart3, 
   Users, MessageSquare, Clock, Star, Building2, School,
   Phone, MapPin, Facebook, Instagram, Linkedin, Twitter,
-  ChevronDown, Play, Menu, X
+  ChevronDown, Play, Menu, X, ImagePlus, Palette, FileText,
+  Calendar, Bot, Wand2, PenTool, Layers, Globe, Lock,
+  RefreshCw, Upload, Crop, Type
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,37 +18,79 @@ import { useBranding } from "@/contexts/BrandingContext";
 const features = [
   {
     icon: Mail,
-    title: "Smart Secretary",
-    description: "Email & schedule automation. Convert voice notes to tasks, manage calendars, and draft professional emails automatically.",
+    title: "Smart Secretary Agent",
+    description: "Email & schedule automation. Convert voice notes to tasks, manage calendars, draft professional emails, and set smart reminders automatically.",
     color: "text-blue-500",
     bgColor: "bg-blue-500/10",
-    learnMore: "#secretary"
+    learnMore: "#secretary",
+    capabilities: ["Voice-to-task conversion", "Calendar management", "Email drafting", "Smart reminders"]
   },
   {
     icon: HeadphonesIcon,
-    title: "Customer Support",
-    description: "AI-powered support with human fallback. Handle FAQs, manage tickets, and escalate complex issues intelligently.",
+    title: "Customer Support Agent",
+    description: "AI-powered support with human fallback. Handle FAQs, manage tickets, analyze sentiment, and escalate complex issues intelligently.",
     color: "text-green-500",
     bgColor: "bg-green-500/10",
-    learnMore: "#support"
+    learnMore: "#support",
+    capabilities: ["Ticket management", "Sentiment analysis", "Knowledge base", "Smart escalation"]
   },
   {
     icon: Share2,
     title: "Social Media Agent",
-    description: "Content generation & approval workflows. Create posts, schedule content, and maintain brand consistency across platforms.",
+    description: "AI flyer generation with dual comparison, image editing, content scheduling, and brand consistency across all platforms.",
     color: "text-purple-500",
     bgColor: "bg-purple-500/10",
-    learnMore: "#social"
+    learnMore: "#social",
+    capabilities: ["AI flyer generator", "Dual design comparison", "Image editor", "Content calendar"]
   },
   {
     icon: GraduationCap,
-    title: "Lecturer Assistant",
-    description: "Auto quizzes & performance tracking. Generate assessments from materials, grade automatically, and track student progress.",
+    title: "Lecturer Assistant Agent",
+    description: "Auto quizzes from documents, student performance tracking, feedback generation, and comprehensive reporting.",
     color: "text-orange-500",
     bgColor: "bg-orange-500/10",
-    learnMore: "#lecturer"
+    learnMore: "#lecturer",
+    capabilities: ["Auto quiz generation", "Performance tracking", "Document analysis", "Report generation"]
   },
 ];
+
+// Comprehensive feature list for detailed section
+const comprehensiveFeatures = {
+  socialMedia: [
+    { icon: ImagePlus, title: "AI Flyer Generator", description: "Generate professional marketing flyers with AI in seconds" },
+    { icon: Layers, title: "Dual Design Comparison", description: "Get 2 flyer variations to choose the best design" },
+    { icon: PenTool, title: "Built-in Image Editor", description: "Edit, crop, add text and shapes to customize flyers" },
+    { icon: Palette, title: "Style & Color Presets", description: "8 design styles and color schemes to match your brand" },
+    { icon: Upload, title: "Reference Image Upload", description: "Upload designs for AI to use as inspiration" },
+    { icon: Calendar, title: "Content Calendar", description: "Schedule and manage posts across all platforms" },
+    { icon: Globe, title: "Multi-Platform Support", description: "Instagram, Facebook, Twitter, LinkedIn support" },
+    { icon: Wand2, title: "AI Content Generation", description: "Generate 300-word engaging posts automatically" },
+  ],
+  secretary: [
+    { icon: MessageSquare, title: "Voice-to-Task", description: "Convert voice recordings into actionable tasks" },
+    { icon: Calendar, title: "Calendar Management", description: "Smart scheduling with conflict detection" },
+    { icon: Mail, title: "Email Drafting", description: "AI-generated professional email responses" },
+    { icon: Clock, title: "Smart Reminders", description: "Context-aware reminder system" },
+  ],
+  support: [
+    { icon: HeadphonesIcon, title: "Ticket Management", description: "Unified inbox for all support channels" },
+    { icon: BarChart3, title: "Sentiment Analysis", description: "Real-time customer mood detection" },
+    { icon: FileText, title: "Knowledge Base", description: "Self-learning FAQ system" },
+    { icon: Users, title: "Smart Escalation", description: "Automatic routing to human agents" },
+  ],
+  lecturer: [
+    { icon: FileText, title: "Document Analysis", description: "Extract content from PDFs and documents" },
+    { icon: GraduationCap, title: "Auto Quiz Generation", description: "Create quizzes from lecture materials" },
+    { icon: BarChart3, title: "Performance Tracking", description: "Real-time student analytics" },
+    { icon: RefreshCw, title: "Report Generation", description: "Comprehensive progress reports" },
+  ],
+  platform: [
+    { icon: Shield, title: "Enterprise Security", description: "SOC2 compliant with end-to-end encryption" },
+    { icon: Lock, title: "Role-Based Access", description: "Granular permissions management" },
+    { icon: Building2, title: "Multi-Organization", description: "Manage multiple brands/organizations" },
+    { icon: Bot, title: "AI-Powered Analytics", description: "Insights and recommendations" },
+  ],
+};
 
 const useCases = [
   {
@@ -240,17 +284,37 @@ export default function Landing() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
               {branding.logoUrl ? (
-                <img 
-                  src={branding.logoUrl} 
-                  alt={branding.platformName} 
-                  className="w-10 h-10 rounded-xl object-contain"
-                />
+                <>
+                  {/* Desktop Logo */}
+                  <img 
+                    src={branding.logoUrl} 
+                    alt={branding.platformName} 
+                    className="hidden sm:block w-10 h-10 rounded-xl object-contain"
+                  />
+                  {/* Mobile Logo - Smaller */}
+                  <img 
+                    src={branding.logoUrl} 
+                    alt={branding.platformName} 
+                    className="sm:hidden w-8 h-8 rounded-lg object-contain"
+                  />
+                </>
               ) : (
-                <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                  <Sparkles className="w-6 h-6 text-primary" />
-                </div>
+                <>
+                  {/* Desktop Fallback */}
+                  <div className="hidden sm:flex w-10 h-10 rounded-xl bg-primary/20 items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-primary" />
+                  </div>
+                  {/* Mobile Fallback */}
+                  <div className="sm:hidden w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                  </div>
+                </>
               )}
-              <span className="text-xl font-bold text-foreground">{branding.platformName}</span>
+              {/* Desktop: Full name, Mobile: Abbreviated */}
+              <span className="hidden sm:inline text-xl font-bold text-foreground">{branding.platformName}</span>
+              <span className="sm:hidden text-lg font-bold text-foreground">
+                {branding.platformName.split(' ').map(w => w[0]).join('').slice(0, 4)}
+              </span>
             </div>
             
             {/* Desktop Navigation */}
@@ -387,6 +451,16 @@ export default function Landing() {
                   </div>
                   <h3 className="text-xl font-semibold text-foreground mb-3">{feature.title}</h3>
                   <p className="text-muted-foreground mb-4">{feature.description}</p>
+                  
+                  {/* Capability Tags */}
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {feature.capabilities?.map((cap, idx) => (
+                      <span key={idx} className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
+                        {cap}
+                      </span>
+                    ))}
+                  </div>
+                  
                   <button 
                     onClick={() => scrollToSection(feature.learnMore.replace('#', ''))}
                     className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-1"
@@ -396,6 +470,133 @@ export default function Landing() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Comprehensive Features Breakdown */}
+      <section id="all-features" className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-foreground mb-4">
+              Everything You Need to Succeed
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Explore the full range of features powering each AI agent
+            </p>
+          </div>
+
+          {/* Social Media Agent Features - Highlighted */}
+          <div className="mb-16">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
+                <Share2 className="w-6 h-6 text-purple-500" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-foreground">Social Media Agent</h3>
+                <p className="text-muted-foreground">AI-Powered Content Creation & Management</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {comprehensiveFeatures.socialMedia.map((item, idx) => (
+                <Card key={idx} className="glass border-0 hover:shadow-md transition-all">
+                  <CardContent className="p-5">
+                    <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center mb-3">
+                      <item.icon className="w-5 h-5 text-purple-500" />
+                    </div>
+                    <h4 className="font-semibold text-foreground mb-1">{item.title}</h4>
+                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Other Agent Features Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Secretary Features */}
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-blue-500" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground">Secretary Agent</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {comprehensiveFeatures.secretary.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-accent/50">
+                    <item.icon className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Support Features */}
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
+                  <HeadphonesIcon className="w-5 h-5 text-green-500" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground">Support Agent</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {comprehensiveFeatures.support.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-accent/50">
+                    <item.icon className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Lecturer Features */}
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
+                  <GraduationCap className="w-5 h-5 text-orange-500" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground">Lecturer Agent</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {comprehensiveFeatures.lecturer.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-accent/50">
+                    <item.icon className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Platform Features */}
+            <div>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-foreground">Platform Features</h3>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {comprehensiveFeatures.platform.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-accent/50">
+                    <item.icon className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-sm text-foreground">{item.title}</p>
+                      <p className="text-xs text-muted-foreground">{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
