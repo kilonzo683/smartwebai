@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { 
   LayoutDashboard, 
@@ -19,13 +19,16 @@ import {
   BarChart3,
   CreditCard,
   Lock,
-  Crown
+  Crown,
+  Menu,
+  X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRole } from "@/contexts/RoleContext";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const agents = [
   {
@@ -100,8 +103,13 @@ const agents = [
   },
 ];
 
-export function AppSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+function SidebarContent({ 
+  collapsed = false, 
+  onNavigate 
+}: { 
+  collapsed?: boolean; 
+  onNavigate?: () => void;
+}) {
   const location = useLocation();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -114,15 +122,15 @@ export function AppSidebar() {
       description: "You have been logged out successfully.",
     });
     navigate("/auth");
+    onNavigate?.();
+  };
+
+  const handleNavClick = () => {
+    onNavigate?.();
   };
 
   return (
-    <aside
-      className={cn(
-        "fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 flex flex-col",
-        collapsed ? "w-16" : "w-64"
-      )}
-    >
+    <>
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
@@ -145,6 +153,7 @@ export function AppSidebar() {
             <NavLink
               key={agent.id}
               to={agent.path}
+              onClick={handleNavClick}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
                 isActive
@@ -154,12 +163,12 @@ export function AppSidebar() {
             >
               <Icon
                 className={cn(
-                  "w-5 h-5 transition-colors",
+                  "w-5 h-5 transition-colors flex-shrink-0",
                   isActive ? agent.color : "group-hover:" + agent.color
                 )}
               />
               {!collapsed && (
-                <span className="font-medium text-sm">{agent.name}</span>
+                <span className="font-medium text-sm truncate">{agent.name}</span>
               )}
             </NavLink>
           );
@@ -169,6 +178,7 @@ export function AppSidebar() {
         {(isSupportAgent || isOrgAdmin || isSuperAdmin) && (
           <NavLink
             to="/tickets"
+            onClick={handleNavClick}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
               location.pathname === "/tickets"
@@ -178,7 +188,7 @@ export function AppSidebar() {
           >
             <Ticket
               className={cn(
-                "w-5 h-5 transition-colors",
+                "w-5 h-5 transition-colors flex-shrink-0",
                 location.pathname === "/tickets" ? "text-orange-500" : "group-hover:text-orange-500"
               )}
             />
@@ -192,6 +202,7 @@ export function AppSidebar() {
         {(isOrgAdmin || isSuperAdmin) && (
           <NavLink
             to="/organizations"
+            onClick={handleNavClick}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
               location.pathname === "/organizations"
@@ -201,7 +212,7 @@ export function AppSidebar() {
           >
             <Building2
               className={cn(
-                "w-5 h-5 transition-colors",
+                "w-5 h-5 transition-colors flex-shrink-0",
                 location.pathname === "/organizations" ? "text-blue-500" : "group-hover:text-blue-500"
               )}
             />
@@ -215,6 +226,7 @@ export function AppSidebar() {
         {(isSuperAdmin || isOrgAdmin) && (
           <NavLink
             to="/admin"
+            onClick={handleNavClick}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
               location.pathname === "/admin"
@@ -224,7 +236,7 @@ export function AppSidebar() {
           >
             <Shield
               className={cn(
-                "w-5 h-5 transition-colors",
+                "w-5 h-5 transition-colors flex-shrink-0",
                 location.pathname === "/admin" ? "text-destructive" : "group-hover:text-destructive"
               )}
             />
@@ -238,6 +250,7 @@ export function AppSidebar() {
         {isSuperAdmin && (
           <NavLink
             to="/roles-permissions"
+            onClick={handleNavClick}
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group",
               location.pathname === "/roles-permissions"
@@ -247,7 +260,7 @@ export function AppSidebar() {
           >
             <Crown
               className={cn(
-                "w-5 h-5 transition-colors",
+                "w-5 h-5 transition-colors flex-shrink-0",
                 location.pathname === "/roles-permissions" ? "text-yellow-500" : "group-hover:text-yellow-500"
               )}
             />
@@ -262,6 +275,7 @@ export function AppSidebar() {
       <div className="p-2 border-t border-sidebar-border space-y-1">
         <NavLink
           to="/settings"
+          onClick={handleNavClick}
           className={cn(
             "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
             location.pathname === "/settings"
@@ -269,7 +283,7 @@ export function AppSidebar() {
               : "text-sidebar-foreground hover:bg-accent/50 hover:text-foreground"
           )}
         >
-          <Settings className="w-5 h-5" />
+          <Settings className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="font-medium text-sm">Settings</span>}
         </NavLink>
 
@@ -277,24 +291,72 @@ export function AppSidebar() {
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sidebar-foreground hover:bg-accent/50 hover:text-foreground w-full"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-5 h-5 flex-shrink-0" />
           {!collapsed && <span className="font-medium text-sm">Logout</span>}
         </button>
       </div>
+    </>
+  );
+}
 
-      {/* Collapse Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setCollapsed(!collapsed)}
-        className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-sidebar border border-sidebar-border hover:bg-accent"
-      >
-        {collapsed ? (
-          <ChevronRight className="w-3 h-3" />
-        ) : (
-          <ChevronLeft className="w-3 h-3" />
+export function AppSidebar() {
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  return (
+    <>
+      {/* Mobile Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 h-14 bg-sidebar border-b border-sidebar-border flex items-center px-4 md:hidden">
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="mr-3">
+              <Menu className="w-5 h-5" />
+              <span className="sr-only">Toggle menu</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="p-0 w-72 bg-sidebar border-sidebar-border">
+            <div className="flex flex-col h-full">
+              <SidebarContent onNavigate={() => setMobileOpen(false)} />
+            </div>
+          </SheetContent>
+        </Sheet>
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-primary/20 flex items-center justify-center">
+            <Sparkles className="w-4 h-4 text-primary" />
+          </div>
+          <span className="font-semibold text-foreground text-sm">AI Work Assistant</span>
+        </div>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <aside
+        className={cn(
+          "fixed left-0 top-0 z-40 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 flex-col hidden md:flex",
+          collapsed ? "w-16" : "w-64"
         )}
-      </Button>
-    </aside>
+      >
+        <SidebarContent collapsed={collapsed} />
+
+        {/* Collapse Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-sidebar border border-sidebar-border hover:bg-accent"
+        >
+          {collapsed ? (
+            <ChevronRight className="w-3 h-3" />
+          ) : (
+            <ChevronLeft className="w-3 h-3" />
+          )}
+        </Button>
+      </aside>
+    </>
   );
 }
