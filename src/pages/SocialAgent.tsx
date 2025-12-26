@@ -1,17 +1,19 @@
 import { useCallback, useRef, useState, useEffect } from "react";
-import { Share2, Edit3, Calendar, MessageCircle, TrendingUp, Hash, Palette, Target } from "lucide-react";
+import { Share2, Edit3, Calendar, MessageCircle, TrendingUp, Hash, Palette, ImagePlus } from "lucide-react";
 import { AgentHeader } from "@/components/agents/AgentHeader";
 import { QuickActions } from "@/components/agents/QuickActions";
 import { ChatInterface } from "@/components/chat/ChatInterface";
 import { ContentCalendar } from "@/components/social/ContentCalendar";
 import { CampaignManager } from "@/components/social/CampaignManager";
 import { BrandProfileManager } from "@/components/social/BrandProfileManager";
+import { PostEditor } from "@/components/social/PostEditor";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 const quickActions = [
   { label: "Train brand tone", icon: Palette, prompt: "__BRAND_PROFILE__" },
   { label: "Generate a post", icon: Edit3, prompt: "Help me generate an engaging social media post matching my brand voice" },
+  { label: "Generate flyer", icon: ImagePlus, prompt: "__GENERATE_FLYER__" },
   { label: "View content calendar", icon: Calendar, prompt: "Show me my scheduled content and suggest posts for gaps in the calendar" },
   { label: "Reply to comments", icon: MessageCircle, prompt: "Help me draft professional replies to recent comments while maintaining brand consistency" },
   { label: "Check analytics", icon: TrendingUp, prompt: "Provide a performance summary of my recent posts and campaigns" },
@@ -21,6 +23,7 @@ const quickActions = [
 export default function SocialAgent() {
   const quickActionHandler = useRef<((action: string) => void) | null>(null);
   const [brandProfileOpen, setBrandProfileOpen] = useState(false);
+  const [postEditorOpen, setPostEditorOpen] = useState(false);
   const { user } = useAuth();
   const [stats, setStats] = useState({ posts: 0, campaigns: 0, scheduled: 0 });
 
@@ -46,6 +49,10 @@ export default function SocialAgent() {
   const handleQuickAction = useCallback((prompt: string) => {
     if (prompt === "__BRAND_PROFILE__") {
       setBrandProfileOpen(true);
+      return;
+    }
+    if (prompt === "__GENERATE_FLYER__") {
+      setPostEditorOpen(true);
       return;
     }
     if (quickActionHandler.current) {
@@ -92,6 +99,13 @@ export default function SocialAgent() {
             isOpen={brandProfileOpen} 
             onClose={() => setBrandProfileOpen(false)}
             onProfileSelect={handleBrandProfileSelect}
+          />
+
+          {/* Post Editor for Generate Flyer quick action */}
+          <PostEditor
+            isOpen={postEditorOpen}
+            onClose={() => setPostEditorOpen(false)}
+            onSaved={() => setPostEditorOpen(false)}
           />
           
           {/* Stats Card */}
