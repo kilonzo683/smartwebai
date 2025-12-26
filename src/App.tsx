@@ -13,6 +13,8 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
 import Landing from "./pages/Landing";
 import Pricing from "./pages/Pricing";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import Onboarding from "./pages/Onboarding";
 import SecretaryAgent from "./pages/SecretaryAgent";
 import SupportAgent from "./pages/SupportAgent";
@@ -46,6 +48,8 @@ const App = () => (
               <Routes>
                 <Route path="/landing" element={<Landing />} />
                 <Route path="/pricing" element={<Pricing />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/accept-invite" element={<AcceptInvite />} />
                 <Route path="/onboarding" element={
