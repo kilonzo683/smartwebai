@@ -1,1 +1,10 @@
 project_id = "upoxlymldxmhjttktylu"
+
+[functions.process-document]
+verify_jwt = false
+
+[functions.transcribe-voice]
+verify_jwt = false
+
+[functions.chat]
+verify_jwt = false
