@@ -82,6 +82,7 @@ interface IntegrationSettings {
 
 interface BrandingSettings {
   logo_url: string;
+  mobile_logo_url: string;
   favicon_url: string;
   hero_image_url: string;
   tagline: string;
@@ -96,6 +97,7 @@ export function SystemSettings() {
   const { refetch: refetchBranding } = useBranding();
 
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const mobileLogoInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const heroInputRef = useRef<HTMLInputElement>(null);
 
@@ -163,6 +165,7 @@ export function SystemSettings() {
 
   const [brandingSettings, setBrandingSettings] = useState<BrandingSettings>({
     logo_url: "",
+    mobile_logo_url: "",
     favicon_url: "",
     hero_image_url: "",
     tagline: "AI-Powered Work Assistant",
@@ -243,7 +246,7 @@ export function SystemSettings() {
 
   const handleImageUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
-    imageType: "logo" | "favicon" | "hero"
+    imageType: "logo" | "mobile_logo" | "favicon" | "hero"
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -279,6 +282,8 @@ export function SystemSettings() {
 
       if (imageType === "logo") {
         setBrandingSettings(prev => ({ ...prev, logo_url: urlWithTimestamp }));
+      } else if (imageType === "mobile_logo") {
+        setBrandingSettings(prev => ({ ...prev, mobile_logo_url: urlWithTimestamp }));
       } else if (imageType === "favicon") {
         setBrandingSettings(prev => ({ ...prev, favicon_url: urlWithTimestamp }));
       } else if (imageType === "hero") {
@@ -294,15 +299,18 @@ export function SystemSettings() {
     }
   };
 
-  const handleRemoveImage = (imageType: "logo" | "favicon" | "hero") => {
+  const handleRemoveImage = (imageType: "logo" | "mobile_logo" | "favicon" | "hero") => {
     if (imageType === "logo") {
       setBrandingSettings(prev => ({ ...prev, logo_url: "" }));
+    } else if (imageType === "mobile_logo") {
+      setBrandingSettings(prev => ({ ...prev, mobile_logo_url: "" }));
     } else if (imageType === "favicon") {
       setBrandingSettings(prev => ({ ...prev, favicon_url: "" }));
     } else if (imageType === "hero") {
       setBrandingSettings(prev => ({ ...prev, hero_image_url: "" }));
     }
-    toast.success(`${imageType.charAt(0).toUpperCase() + imageType.slice(1)} removed`);
+    const displayName = imageType === "mobile_logo" ? "Mobile logo" : imageType.charAt(0).toUpperCase() + imageType.slice(1);
+    toast.success(`${displayName} removed`);
   };
 
   const sendTestEmail = async () => {
@@ -503,58 +511,120 @@ export function SystemSettings() {
               <CardDescription>Upload logo, favicon, and customize brand colors</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Logo Upload */}
-              <div className="space-y-3">
-                <Label>Platform Logo</Label>
-                <div className="flex items-center gap-4">
-                  <div className="w-32 h-32 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50">
-                    {brandingSettings.logo_url ? (
-                      <img
-                        src={brandingSettings.logo_url}
-                        alt="Platform Logo"
-                        className="w-full h-full object-contain p-2"
-                      />
-                    ) : (
-                      <div className="text-center text-muted-foreground">
-                        <Upload className="w-8 h-8 mx-auto mb-1" />
-                        <span className="text-xs">No logo</span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => logoInputRef.current?.click()}
-                      disabled={isUploading.logo}
-                    >
-                      {isUploading.logo ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              {/* Logo Uploads - Desktop & Mobile */}
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* Desktop Logo Upload */}
+                <div className="space-y-3">
+                  <Label>Desktop Logo</Label>
+                  <p className="text-xs text-muted-foreground">Used on larger screens and desktop sidebar</p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-32 h-32 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50">
+                      {brandingSettings.logo_url ? (
+                        <img
+                          src={brandingSettings.logo_url}
+                          alt="Platform Logo"
+                          className="w-full h-full object-contain p-2"
+                        />
                       ) : (
-                        <Upload className="w-4 h-4 mr-2" />
+                        <div className="text-center text-muted-foreground">
+                          <Upload className="w-8 h-8 mx-auto mb-1" />
+                          <span className="text-xs">No logo</span>
+                        </div>
                       )}
-                      Upload Logo
-                    </Button>
-                    {brandingSettings.logo_url && (
+                    </div>
+                    <div className="flex flex-col gap-2">
                       <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
-                        onClick={() => handleRemoveImage("logo")}
+                        variant="outline"
+                        onClick={() => logoInputRef.current?.click()}
+                        disabled={isUploading.logo}
                       >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Remove
+                        {isUploading.logo ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4 mr-2" />
+                        )}
+                        Upload Logo
                       </Button>
-                    )}
-                    <input
-                      ref={logoInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => handleImageUpload(e, "logo")}
-                      className="hidden"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Recommended: 200x200px, PNG or SVG
-                    </p>
+                      {brandingSettings.logo_url && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleRemoveImage("logo")}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Remove
+                        </Button>
+                      )}
+                      <input
+                        ref={logoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, "logo")}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Recommended: 200x200px, PNG or SVG
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile Logo Upload */}
+                <div className="space-y-3">
+                  <Label>Mobile Logo</Label>
+                  <p className="text-xs text-muted-foreground">Used on mobile header and collapsed sidebar</p>
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 rounded-lg border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/50">
+                      {brandingSettings.mobile_logo_url ? (
+                        <img
+                          src={brandingSettings.mobile_logo_url}
+                          alt="Mobile Logo"
+                          className="w-full h-full object-contain p-1"
+                        />
+                      ) : (
+                        <div className="text-center text-muted-foreground">
+                          <Upload className="w-6 h-6 mx-auto mb-1" />
+                          <span className="text-xs">No logo</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => mobileLogoInputRef.current?.click()}
+                        disabled={isUploading.mobile_logo}
+                      >
+                        {isUploading.mobile_logo ? (
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        ) : (
+                          <Upload className="w-4 h-4 mr-2" />
+                        )}
+                        Upload Mobile Logo
+                      </Button>
+                      {brandingSettings.mobile_logo_url && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleRemoveImage("mobile_logo")}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Remove
+                        </Button>
+                      )}
+                      <input
+                        ref={mobileLogoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, "mobile_logo")}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Recommended: 64x64px, PNG or SVG
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

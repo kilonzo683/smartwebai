@@ -144,16 +144,31 @@ function SidebarContent({
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          {branding.logoUrl ? (
-            <img 
-              src={branding.logoUrl} 
-              alt={branding.platformName} 
-              className="w-8 h-8 rounded-lg object-contain"
-            />
+          {/* Use mobile logo when collapsed, desktop logo when expanded */}
+          {collapsed ? (
+            (branding.mobileLogoUrl || branding.logoUrl) ? (
+              <img 
+                src={branding.mobileLogoUrl || branding.logoUrl || ""} 
+                alt={branding.platformName} 
+                className="w-8 h-8 rounded-lg object-contain"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+            )
           ) : (
-            <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary" />
-            </div>
+            branding.logoUrl ? (
+              <img 
+                src={branding.logoUrl} 
+                alt={branding.platformName} 
+                className="w-8 h-8 rounded-lg object-contain"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+            )
           )}
           {!collapsed && (
             <span className="font-semibold text-foreground">{branding.platformName}</span>
@@ -346,9 +361,10 @@ export function AppSidebar() {
           </SheetContent>
         </Sheet>
         <div className="flex items-center gap-2">
-          {branding.logoUrl ? (
+          {/* Use mobile logo for mobile header, fallback to desktop logo */}
+          {(branding.mobileLogoUrl || branding.logoUrl) ? (
             <img 
-              src={branding.logoUrl} 
+              src={branding.mobileLogoUrl || branding.logoUrl || ""} 
               alt={branding.platformName} 
               className="w-7 h-7 rounded-lg object-contain"
             />
