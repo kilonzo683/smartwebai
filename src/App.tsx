@@ -34,6 +34,8 @@ import Security from "./pages/Security";
 import RolesPermissions from "./pages/RolesPermissions";
 import Auth from "./pages/Auth";
 import AcceptInvite from "./pages/AcceptInvite";
+import Resumes from "./pages/Resumes";
+import ResumeBuilder from "./pages/ResumeBuilder";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -83,6 +85,8 @@ const App = () => (
                     <Route path="/billing" element={<Billing />} />
                     <Route path="/security" element={<Security />} />
                     <Route path="/roles-permissions" element={<RolesPermissions />} />
+                    <Route path="/resumes" element={<Resumes />} />
+                    <Route path="/resumes/:id" element={<ResumeBuilder />} />
                     <Route
                       path="/admin"
                       element={
