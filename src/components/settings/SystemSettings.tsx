@@ -280,17 +280,36 @@ export function SystemSettings() {
 
       const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`;
 
+      // Update local state
+      let updatedBrandingSettings = { ...brandingSettings };
       if (imageType === "logo") {
-        setBrandingSettings(prev => ({ ...prev, logo_url: urlWithTimestamp }));
+        updatedBrandingSettings.logo_url = urlWithTimestamp;
       } else if (imageType === "mobile_logo") {
-        setBrandingSettings(prev => ({ ...prev, mobile_logo_url: urlWithTimestamp }));
+        updatedBrandingSettings.mobile_logo_url = urlWithTimestamp;
       } else if (imageType === "favicon") {
-        setBrandingSettings(prev => ({ ...prev, favicon_url: urlWithTimestamp }));
+        updatedBrandingSettings.favicon_url = urlWithTimestamp;
       } else if (imageType === "hero") {
-        setBrandingSettings(prev => ({ ...prev, hero_image_url: urlWithTimestamp }));
+        updatedBrandingSettings.hero_image_url = urlWithTimestamp;
       }
+      
+      setBrandingSettings(updatedBrandingSettings);
 
-      toast.success(`${imageType.charAt(0).toUpperCase() + imageType.slice(1)} uploaded successfully`);
+      // Auto-save to database immediately after upload
+      const { error: saveError } = await supabase
+        .from("platform_settings")
+        .upsert({ 
+          key: "branding_settings", 
+          value: updatedBrandingSettings, 
+          updated_at: new Date().toISOString() 
+        }, { onConflict: "key" });
+
+      if (saveError) throw saveError;
+
+      // Refresh branding context to update sidebar immediately
+      await refetchBranding();
+
+      const displayName = imageType === "mobile_logo" ? "Mobile logo" : imageType.charAt(0).toUpperCase() + imageType.slice(1);
+      toast.success(`${displayName} uploaded and saved`);
     } catch (error) {
       console.error(`Error uploading ${imageType}:`, error);
       toast.error(`Failed to upload ${imageType}`);
@@ -299,18 +318,40 @@ export function SystemSettings() {
     }
   };
 
-  const handleRemoveImage = (imageType: "logo" | "mobile_logo" | "favicon" | "hero") => {
+  const handleRemoveImage = async (imageType: "logo" | "mobile_logo" | "favicon" | "hero") => {
+    let updatedBrandingSettings = { ...brandingSettings };
     if (imageType === "logo") {
-      setBrandingSettings(prev => ({ ...prev, logo_url: "" }));
+      updatedBrandingSettings.logo_url = "";
     } else if (imageType === "mobile_logo") {
-      setBrandingSettings(prev => ({ ...prev, mobile_logo_url: "" }));
+      updatedBrandingSettings.mobile_logo_url = "";
     } else if (imageType === "favicon") {
-      setBrandingSettings(prev => ({ ...prev, favicon_url: "" }));
+      updatedBrandingSettings.favicon_url = "";
     } else if (imageType === "hero") {
-      setBrandingSettings(prev => ({ ...prev, hero_image_url: "" }));
+      updatedBrandingSettings.hero_image_url = "";
     }
-    const displayName = imageType === "mobile_logo" ? "Mobile logo" : imageType.charAt(0).toUpperCase() + imageType.slice(1);
-    toast.success(`${displayName} removed`);
+    
+    setBrandingSettings(updatedBrandingSettings);
+
+    // Auto-save to database and refresh branding context immediately
+    try {
+      const { error } = await supabase
+        .from("platform_settings")
+        .upsert({ 
+          key: "branding_settings", 
+          value: updatedBrandingSettings, 
+          updated_at: new Date().toISOString() 
+        }, { onConflict: "key" });
+
+      if (error) throw error;
+
+      await refetchBranding();
+
+      const displayName = imageType === "mobile_logo" ? "Mobile logo" : imageType.charAt(0).toUpperCase() + imageType.slice(1);
+      toast.success(`${displayName} removed`);
+    } catch (error) {
+      console.error(`Error removing ${imageType}:`, error);
+      toast.error(`Failed to remove ${imageType}`);
+    }
   };
 
   const sendTestEmail = async () => {
