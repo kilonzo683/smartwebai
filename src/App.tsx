@@ -11,6 +11,9 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AdminRoute } from "@/components/auth/AdminRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import Index from "./pages/Index";
+import Landing from "./pages/Landing";
+import Pricing from "./pages/Pricing";
+import Onboarding from "./pages/Onboarding";
 import SecretaryAgent from "./pages/SecretaryAgent";
 import SupportAgent from "./pages/SupportAgent";
 import SocialAgent from "./pages/SocialAgent";
@@ -41,8 +44,15 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <Routes>
+                <Route path="/landing" element={<Landing />} />
+                <Route path="/pricing" element={<Pricing />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/accept-invite" element={<AcceptInvite />} />
+                <Route path="/onboarding" element={
+                  <ProtectedRoute>
+                    <Onboarding />
+                  </ProtectedRoute>
+                } />
                 <Route
                   element={
                     <ProtectedRoute>
