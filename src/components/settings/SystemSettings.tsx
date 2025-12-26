@@ -15,6 +15,7 @@ import { Separator } from "@/components/ui/separator";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useBranding } from "@/contexts/BrandingContext";
+import { usePlatformStatus } from "@/contexts/PlatformStatusContext";
 import type { Json } from "@/integrations/supabase/types";
 
 // System Settings Interfaces
@@ -95,6 +96,7 @@ export function SystemSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState<{ [key: string]: boolean }>({});
   const { refetch: refetchBranding } = useBranding();
+  const { refetch: refetchPlatformStatus } = usePlatformStatus();
 
   const logoInputRef = useRef<HTMLInputElement>(null);
   const mobileLogoInputRef = useRef<HTMLInputElement>(null);
@@ -235,6 +237,11 @@ export function SystemSettings() {
       // Refresh branding context when general or branding settings are saved
       if (key === "general_settings" || key === "branding_settings") {
         await refetchBranding();
+      }
+      
+      // Refresh platform status when general settings are saved (maintenance/demo mode)
+      if (key === "general_settings") {
+        await refetchPlatformStatus();
       }
     } catch (error) {
       console.error("Error saving settings:", error);
