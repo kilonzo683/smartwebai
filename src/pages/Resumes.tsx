@@ -38,8 +38,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useResumes } from "@/hooks/useResumes";
 import { Resume, RESUME_TEMPLATES } from "@/types/resume";
 import { format } from "date-fns";
-import { AppLayout } from "@/components/layout/AppLayout";
-
 export default function Resumes() {
   const navigate = useNavigate();
   const { resumes, isLoading, createResume, deleteResume, duplicateResume } = useResumes();
@@ -80,8 +78,7 @@ export default function Resumes() {
   };
 
   return (
-    <AppLayout>
-      <div className="p-6 space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -335,7 +332,6 @@ export default function Resumes() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
-    </AppLayout>
+    </div>
   );
 }
