@@ -20,14 +20,14 @@ import {
   CreditCard,
   Lock,
   Crown,
-  Menu,
-  X
+  Menu
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useRole } from "@/contexts/RoleContext";
+import { useSidebar } from "@/contexts/SidebarContext";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const agents = [
@@ -300,7 +300,7 @@ function SidebarContent({
 }
 
 export function AppSidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const { collapsed, toggleCollapsed } = useSidebar();
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
@@ -347,7 +347,7 @@ export function AppSidebar() {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapsed}
           className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-sidebar border border-sidebar-border hover:bg-accent"
         >
           {collapsed ? (
