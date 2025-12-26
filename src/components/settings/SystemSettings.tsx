@@ -251,6 +251,9 @@ export function SystemSettings() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Reset the input so the same file can be selected again
+    event.target.value = "";
+
     if (!file.type.startsWith("image/")) {
       toast.error("Please upload an image file");
       return;
@@ -263,56 +266,66 @@ export function SystemSettings() {
     }
 
     setIsUploading(prev => ({ ...prev, [imageType]: true }));
+    const displayName = imageType === "mobile_logo" ? "Mobile logo" : imageType.charAt(0).toUpperCase() + imageType.slice(1);
 
     try {
       const fileExt = file.name.split(".").pop();
       const filePath = `platform/${imageType}.${fileExt}`;
 
+      console.log(`Uploading ${imageType} to ${filePath}...`);
+
       const { error: uploadError } = await supabase.storage
         .from("platform-assets")
         .upload(filePath, file, { upsert: true });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Storage upload error:", uploadError);
+        throw uploadError;
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from("platform-assets")
         .getPublicUrl(filePath);
 
       const urlWithTimestamp = `${publicUrl}?t=${Date.now()}`;
+      console.log(`${imageType} uploaded, URL: ${urlWithTimestamp}`);
 
-      // Update local state
-      let updatedBrandingSettings = { ...brandingSettings };
+      // Get fresh state to avoid stale closure issues
+      const currentSettings = { ...brandingSettings };
       if (imageType === "logo") {
-        updatedBrandingSettings.logo_url = urlWithTimestamp;
+        currentSettings.logo_url = urlWithTimestamp;
       } else if (imageType === "mobile_logo") {
-        updatedBrandingSettings.mobile_logo_url = urlWithTimestamp;
+        currentSettings.mobile_logo_url = urlWithTimestamp;
       } else if (imageType === "favicon") {
-        updatedBrandingSettings.favicon_url = urlWithTimestamp;
+        currentSettings.favicon_url = urlWithTimestamp;
       } else if (imageType === "hero") {
-        updatedBrandingSettings.hero_image_url = urlWithTimestamp;
+        currentSettings.hero_image_url = urlWithTimestamp;
       }
       
-      setBrandingSettings(updatedBrandingSettings);
+      setBrandingSettings(currentSettings);
 
       // Auto-save to database immediately after upload
+      console.log("Saving branding settings to database...", currentSettings);
       const { error: saveError } = await supabase
         .from("platform_settings")
         .upsert({ 
           key: "branding_settings", 
-          value: updatedBrandingSettings, 
+          value: currentSettings, 
           updated_at: new Date().toISOString() 
         }, { onConflict: "key" });
 
-      if (saveError) throw saveError;
+      if (saveError) {
+        console.error("Database save error:", saveError);
+        throw saveError;
+      }
 
       // Refresh branding context to update sidebar immediately
       await refetchBranding();
 
-      const displayName = imageType === "mobile_logo" ? "Mobile logo" : imageType.charAt(0).toUpperCase() + imageType.slice(1);
       toast.success(`${displayName} uploaded and saved`);
     } catch (error) {
       console.error(`Error uploading ${imageType}:`, error);
-      toast.error(`Failed to upload ${imageType}`);
+      toast.error(`Failed to upload ${displayName}`);
     } finally {
       setIsUploading(prev => ({ ...prev, [imageType]: false }));
     }
