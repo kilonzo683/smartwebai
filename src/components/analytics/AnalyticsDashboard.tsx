@@ -13,9 +13,10 @@ import {
 } from "recharts";
 import { 
   BarChart3, TrendingUp, TrendingDown, Users, MessageSquare, 
-  AlertTriangle, ThumbsUp, Download, Loader2, Calendar
+  AlertTriangle, ThumbsUp, Download, Loader2, Calendar, TestTube
 } from "lucide-react";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { useDemoData } from "@/hooks/useDemoData";
 
 interface PerformanceMetric {
   agent_type: string;
@@ -48,6 +49,7 @@ const agentLabels: Record<string, string> = {
 export function AnalyticsDashboard() {
   const { currentOrg } = useOrganization();
   const { user } = useAuth();
+  const { isDemoMode, analytics: demoAnalytics } = useDemoData();
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState("7");
   const [selectedAgent, setSelectedAgent] = useState("all");
@@ -144,8 +146,27 @@ export function AnalyticsDashboard() {
   };
 
   useEffect(() => {
+    // If demo mode, use demo data
+    if (isDemoMode && demoAnalytics) {
+      setConversationStats({
+        total: 1085,
+        resolved: 892,
+        escalated: 67,
+        avgConfidence: 0.89,
+        avgSatisfaction: 4.2,
+      });
+      setAgentDistribution(
+        demoAnalytics.messagesByAgent.map((a) => ({
+          name: a.agent,
+          value: a.messages,
+        }))
+      );
+      setIsLoading(false);
+      return;
+    }
+    
     fetchAnalytics();
-  }, [currentOrg, dateRange, selectedAgent]);
+  }, [currentOrg, dateRange, selectedAgent, isDemoMode, demoAnalytics]);
 
   const exportReport = () => {
     const reportData = {
@@ -174,26 +195,49 @@ export function AnalyticsDashboard() {
     ? ((conversationStats.escalated / conversationStats.total) * 100).toFixed(1)
     : "0";
 
-  // Prepare chart data
-  const trendData = performanceData.reduce((acc, item) => {
-    const existing = acc.find((d) => d.date === item.date);
-    if (existing) {
-      existing.conversations += item.total_conversations;
-      existing.resolved += item.resolved_conversations;
-      existing.escalated += item.escalated_conversations;
-    } else {
-      acc.push({
-        date: format(new Date(item.date), "MMM d"),
-        conversations: item.total_conversations,
-        resolved: item.resolved_conversations,
-        escalated: item.escalated_conversations,
-      });
-    }
-    return acc;
-  }, [] as { date: string; conversations: number; resolved: number; escalated: number }[]);
+  // Prepare chart data - use demo data if in demo mode
+  const trendData = isDemoMode && demoAnalytics
+    ? demoAnalytics.conversationsByDay.map((d) => ({
+        date: d.date,
+        conversations: d.count,
+        resolved: Math.floor(d.count * 0.82),
+        escalated: Math.floor(d.count * 0.06),
+      }))
+    : performanceData.reduce((acc, item) => {
+        const existing = acc.find((d) => d.date === item.date);
+        if (existing) {
+          existing.conversations += item.total_conversations;
+          existing.resolved += item.resolved_conversations;
+          existing.escalated += item.escalated_conversations;
+        } else {
+          acc.push({
+            date: format(new Date(item.date), "MMM d"),
+            conversations: item.total_conversations,
+            resolved: item.resolved_conversations,
+            escalated: item.escalated_conversations,
+          });
+        }
+        return acc;
+      }, [] as { date: string; conversations: number; resolved: number; escalated: number }[]);
+
+  // Demo satisfaction trend data
+  const satisfactionTrendData = isDemoMode && demoAnalytics
+    ? demoAnalytics.satisfactionTrend
+    : [];
 
   return (
     <div className="space-y-6">
+      {/* Demo Mode Banner */}
+      {isDemoMode && (
+        <div className="flex items-center gap-3 p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+          <TestTube className="w-5 h-5 text-purple-500" />
+          <div>
+            <p className="font-medium text-purple-500">Demo Mode Active</p>
+            <p className="text-sm text-muted-foreground">Showing sample analytics data for demonstration purposes</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -206,7 +250,7 @@ export function AnalyticsDashboard() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Select value={dateRange} onValueChange={setDateRange}>
+          <Select value={dateRange} onValueChange={setDateRange} disabled={isDemoMode}>
             <SelectTrigger className="w-32">
               <Calendar className="w-4 h-4 mr-2" />
               <SelectValue />
@@ -218,7 +262,7 @@ export function AnalyticsDashboard() {
               <SelectItem value="90">Last 90 days</SelectItem>
             </SelectContent>
           </Select>
-          <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+          <Select value={selectedAgent} onValueChange={setSelectedAgent} disabled={isDemoMode}>
             <SelectTrigger className="w-36">
               <SelectValue />
             </SelectTrigger>
