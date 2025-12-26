@@ -312,7 +312,7 @@ export default function RolesPermissions() {
   return (
     <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
               <Shield className="w-8 h-8 text-primary" />
@@ -327,6 +327,7 @@ export default function RolesPermissions() {
             size="sm" 
             onClick={() => fetchUsers()}
             disabled={isLoading}
+            className="self-start sm:self-auto"
           >
             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             Refresh

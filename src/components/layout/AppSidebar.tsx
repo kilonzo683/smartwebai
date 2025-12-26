@@ -346,10 +346,10 @@ export function AppSidebar() {
   return (
     <>
       {/* Mobile Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-14 bg-sidebar border-b border-sidebar-border flex items-center px-4 md:hidden">
+      <div className="fixed top-0 left-0 right-0 z-50 h-14 bg-sidebar border-b border-sidebar-border flex items-center justify-between px-4 md:hidden">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="mr-3">
+            <Button variant="ghost" size="icon">
               <Menu className="w-5 h-5" />
               <span className="sr-only">Toggle menu</span>
             </Button>
