@@ -36,70 +36,60 @@ const agents = [
     name: "Dashboard",
     icon: LayoutDashboard,
     path: "/",
-    color: "text-primary",
   },
   {
     id: "secretary",
     name: "Smart Secretary",
     icon: Mail,
     path: "/secretary",
-    color: "text-agent-secretary",
   },
   {
     id: "support",
     name: "Customer Support",
     icon: HeadphonesIcon,
     path: "/support",
-    color: "text-agent-support",
   },
   {
     id: "social",
     name: "Social Media",
     icon: Share2,
     path: "/social",
-    color: "text-agent-social",
   },
   {
     id: "lecturer",
     name: "Lecturer Assistant",
     icon: GraduationCap,
     path: "/lecturer",
-    color: "text-agent-lecturer",
   },
   {
     id: "student-quiz",
     name: "Student Quizzes",
     icon: BookOpen,
     path: "/student-quiz",
-    color: "text-agent-lecturer",
   },
   {
     id: "channels",
     name: "Channels",
     icon: MessageSquare,
     path: "/channels",
-    color: "text-cyan-500",
   },
   {
     id: "analytics",
     name: "Analytics",
     icon: BarChart3,
     path: "/analytics",
-    color: "text-purple-500",
   },
   {
     id: "billing",
     name: "Billing",
     icon: CreditCard,
     path: "/billing",
-    color: "text-green-500",
   },
   {
     id: "security",
     name: "Security",
     icon: Lock,
     path: "/security",
-    color: "text-red-500",
   },
 ];
 
@@ -164,7 +154,7 @@ function SidebarContent({
               <Icon
                 className={cn(
                   "w-5 h-5 transition-colors flex-shrink-0",
-                  isActive ? agent.color : "group-hover:" + agent.color
+                  isActive ? "text-sidebar-primary" : "text-sidebar-foreground group-hover:text-sidebar-primary"
                 )}
               />
               {!collapsed && (
