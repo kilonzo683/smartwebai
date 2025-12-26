@@ -156,9 +156,11 @@ export function ChatInterface({
       }
     } catch (error) {
       console.error("Chat error:", error);
+      // Sanitize error messages - don't expose internal details to users
+      const userFriendlyMessage = "Unable to process your request. Please try again.";
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to get response",
+        description: userFriendlyMessage,
         variant: "destructive",
       });
       setMessages((prev) => prev.filter((m) => m.content !== "" || m.role !== "assistant"));

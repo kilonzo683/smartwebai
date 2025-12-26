@@ -217,8 +217,10 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    // Log detailed error server-side for debugging
     console.error("Process document error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    // Return sanitized error message to client - don't expose internal details
+    return new Response(JSON.stringify({ error: "An error occurred while processing the document. Please try again." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

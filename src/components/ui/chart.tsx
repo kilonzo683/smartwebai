@@ -58,6 +58,33 @@ const ChartContainer = React.forwardRef<
 });
 ChartContainer.displayName = "Chart";
 
+// Sanitize chart ID to prevent CSS injection - only allow alphanumeric, underscores, and hyphens
+const sanitizeChartId = (id: string): string => {
+  return id.replace(/[^a-zA-Z0-9_-]/g, '');
+};
+
+// Validate CSS color format - only allow safe color values
+const isValidCssColor = (color: string): boolean => {
+  // Allow hex colors, rgb/rgba, hsl/hsla, and named colors
+  const hexPattern = /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/;
+  const rgbPattern = /^rgba?\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*(,\s*(0|1|0?\.\d+))?\s*\)$/;
+  const hslPattern = /^hsla?\(\s*\d{1,3}\s*,\s*\d{1,3}%\s*,\s*\d{1,3}%\s*(,\s*(0|1|0?\.\d+))?\s*\)$/;
+  const varPattern = /^var\(--[a-zA-Z0-9-]+\)$/;
+  // Also allow CSS custom properties like "hsl(var(--chart-1))"
+  const hslVarPattern = /^hsl\(var\(--[a-zA-Z0-9-]+\)\)$/;
+  
+  return hexPattern.test(color) || 
+         rgbPattern.test(color) || 
+         hslPattern.test(color) || 
+         varPattern.test(color) ||
+         hslVarPattern.test(color);
+};
+
+// Sanitize CSS key to prevent injection - only allow alphanumeric, underscores, and hyphens
+const sanitizeCssKey = (key: string): string => {
+  return key.replace(/[^a-zA-Z0-9_-]/g, '');
+};
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(([_, config]) => config.theme || config.color);
 
@@ -65,18 +92,25 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
     return null;
   }
 
+  // Sanitize the chart ID
+  const sanitizedId = sanitizeChartId(id);
+
   return (
     <style
       dangerouslySetInnerHTML={{
         __html: Object.entries(THEMES)
           .map(
             ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
+${prefix} [data-chart=${sanitizedId}] {
 ${colorConfig
   .map(([key, itemConfig]) => {
     const color = itemConfig.theme?.[theme as keyof typeof itemConfig.theme] || itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
+    // Validate color before using - skip invalid colors
+    if (!color || !isValidCssColor(color)) return null;
+    const sanitizedKey = sanitizeCssKey(key);
+    return `  --color-${sanitizedKey}: ${color};`;
   })
+  .filter(Boolean)
   .join("\n")}
 }
 `,
