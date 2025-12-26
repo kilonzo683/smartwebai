@@ -10,7 +10,28 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBranding } from "@/contexts/BrandingContext";
 import { z } from "zod";
+
+// Reusable branding header component for auth pages
+function AuthBrandingHeader({ branding }: { branding: { logoUrl: string | null; platformName: string } }) {
+  return (
+    <div className="flex items-center justify-center gap-3 mb-8">
+      {branding.logoUrl ? (
+        <img 
+          src={branding.logoUrl} 
+          alt={branding.platformName} 
+          className="w-12 h-12 rounded-xl object-contain"
+        />
+      ) : (
+        <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
+          <Sparkles className="w-7 h-7 text-primary" />
+        </div>
+      )}
+      <span className="text-2xl font-bold text-foreground">{branding.platformName}</span>
+    </div>
+  );
+}
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -30,6 +51,7 @@ export default function Auth() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isLoading: authLoading } = useAuth();
+  const { branding } = useBranding();
 
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/";
 
@@ -340,12 +362,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <div className="w-full max-w-md">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-              <Sparkles className="w-7 h-7 text-primary" />
-            </div>
-            <span className="text-2xl font-bold text-foreground">AI Work Assistant</span>
-          </div>
+          <AuthBrandingHeader branding={branding} />
 
           <Card className="glass">
             <CardHeader className="text-center">
@@ -414,12 +431,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <div className="w-full max-w-md">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-              <Sparkles className="w-7 h-7 text-primary" />
-            </div>
-            <span className="text-2xl font-bold text-foreground">AI Work Assistant</span>
-          </div>
+          <AuthBrandingHeader branding={branding} />
 
           <Card className="glass">
             <CardHeader className="text-center">
@@ -484,12 +496,7 @@ export default function Auth() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-background">
         <div className="w-full max-w-md">
-          <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-              <Sparkles className="w-7 h-7 text-primary" />
-            </div>
-            <span className="text-2xl font-bold text-foreground">AI Work Assistant</span>
-          </div>
+          <AuthBrandingHeader branding={branding} />
 
           <Card className="glass">
             <CardHeader className="text-center">
@@ -559,12 +566,7 @@ export default function Auth() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md">
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center">
-            <Sparkles className="w-7 h-7 text-primary" />
-          </div>
-          <span className="text-2xl font-bold text-foreground">AI Work Assistant</span>
-        </div>
+        <AuthBrandingHeader branding={branding} />
 
         <Card className="glass">
           <CardHeader className="text-center">
