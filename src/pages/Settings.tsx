@@ -403,14 +403,16 @@ export default function Settings() {
     <div className="max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div className="animate-slide-up">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Settings</h1>
             <p className="text-muted-foreground mt-2">
               Manage your account, organization, and platform settings
             </p>
           </div>
-          {getRoleBadge()}
+          <div className="self-start sm:self-auto">
+            {getRoleBadge()}
+          </div>
         </div>
       </div>
 
