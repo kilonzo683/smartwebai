@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { 
   ArrowLeft, Save, Download, Eye, History, Settings, 
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import html2pdf from "html2pdf.js";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -95,11 +96,58 @@ export default function ResumeBuilder() {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
   };
 
+  const [isExporting, setIsExporting] = useState(false);
+
   const handleExport = async () => {
-    // Open preview in print mode
+    setIsExporting(true);
     setShowPreview(true);
-    setTimeout(() => {
-      window.print();
+    
+    // Wait for preview to render
+    setTimeout(async () => {
+      const element = document.getElementById('resume-preview');
+      if (!element) {
+        setIsExporting(false);
+        toast({
+          title: "Export failed",
+          description: "Could not find resume preview element",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const opt = {
+        margin: 0,
+        filename: `${localTitle || 'resume'}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        },
+        jsPDF: { 
+          unit: 'mm' as const, 
+          format: 'a4' as const, 
+          orientation: 'portrait' as const
+        },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] as const }
+      };
+
+      try {
+        await html2pdf().set(opt).from(element).save();
+        toast({
+          title: "PDF exported!",
+          description: "Your resume has been downloaded.",
+        });
+      } catch (error) {
+        toast({
+          title: "Export failed",
+          description: "There was an error exporting your resume.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsExporting(false);
+      }
     }, 500);
   };
 
@@ -186,9 +234,13 @@ export default function ResumeBuilder() {
               <Eye className="w-4 h-4" />
             </Button>
 
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Export PDF</span>
+            <Button variant="outline" onClick={handleExport} disabled={isExporting}>
+              {isExporting ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Download className="w-4 h-4 mr-2" />
+              )}
+              <span className="hidden sm:inline">{isExporting ? 'Exporting...' : 'Export PDF'}</span>
             </Button>
 
             <Button onClick={saveChanges} disabled={isSaving}>
@@ -389,46 +441,6 @@ export default function ResumeBuilder() {
         </div>
       </div>
 
-      {/* Print styles */}
-      <style>{`
-        @media print {
-          @page {
-            margin: 0;
-            size: A4;
-          }
-          
-          html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          
-          body * {
-            visibility: hidden;
-          }
-          
-          #resume-preview,
-          #resume-preview * {
-            visibility: visible !important;
-          }
-          
-          #resume-preview {
-            position: fixed !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow: visible !important;
-          }
-          
-          header, nav, .sticky, button, .border-b {
-            display: none !important;
-          }
-        }
-      `}</style>
     </div>
   );
 }
