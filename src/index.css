@@ -7,41 +7,41 @@
 @layer base {
   :root {
     /* Blue Color Palette - Light Mode */
-    --background: 195 100% 97%;
-    --foreground: 210 100% 18%;
+    --background: 200 50% 98%;
+    --foreground: 210 100% 12%;
 
-    --card: 195 100% 98%;
-    --card-foreground: 210 100% 18%;
+    --card: 200 40% 99%;
+    --card-foreground: 210 100% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 100% 18%;
+    --popover-foreground: 210 100% 12%;
 
-    --primary: 195 100% 42%;
+    --primary: 195 100% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 195 60% 94%;
-    --secondary-foreground: 210 100% 25%;
+    --secondary: 200 40% 94%;
+    --secondary-foreground: 210 100% 15%;
 
-    --muted: 195 40% 92%;
-    --muted-foreground: 210 30% 40%;
+    --muted: 200 30% 92%;
+    --muted-foreground: 210 40% 35%;
 
-    --accent: 195 80% 88%;
-    --accent-foreground: 210 100% 20%;
+    --accent: 200 50% 90%;
+    --accent-foreground: 210 100% 12%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 195 40% 85%;
-    --input: 195 40% 90%;
-    --ring: 195 100% 42%;
+    --border: 200 30% 85%;
+    --input: 200 30% 90%;
+    --ring: 195 100% 40%;
 
     --radius: 0.75rem;
 
-    /* Agent Colors */
-    --agent-secretary: 210 100% 27%;
-    --agent-support: 195 100% 42%;
-    --agent-social: 190 100% 45%;
-    --agent-lecturer: 185 100% 55%;
+    /* Agent Colors - Light Mode */
+    --agent-secretary: 210 100% 35%;
+    --agent-support: 195 100% 35%;
+    --agent-social: 190 100% 38%;
+    --agent-lecturer: 185 100% 35%;
 
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(210 100% 18%) 0%, hsl(210 100% 27%) 100%);
@@ -60,17 +60,17 @@
     --shadow-glow-support: 0 0 30px hsl(195 100% 42% / 0.3);
     --shadow-glow-social: 0 0 30px hsl(190 100% 45% / 0.3);
     --shadow-glow-lecturer: 0 0 30px hsl(185 100% 55% / 0.3);
-    --shadow-card: 0 4px 24px hsl(210 100% 18% / 0.1);
+    --shadow-card: 0 4px 24px hsl(210 100% 18% / 0.08);
 
     /* Sidebar - Light */
-    --sidebar-background: 195 100% 98%;
-    --sidebar-foreground: 210 30% 40%;
-    --sidebar-primary: 195 100% 42%;
+    --sidebar-background: 200 40% 98%;
+    --sidebar-foreground: 210 40% 30%;
+    --sidebar-primary: 195 100% 40%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 195 60% 94%;
-    --sidebar-accent-foreground: 210 100% 20%;
-    --sidebar-border: 195 40% 88%;
-    --sidebar-ring: 195 100% 42%;
+    --sidebar-accent: 200 40% 94%;
+    --sidebar-accent-foreground: 210 100% 12%;
+    --sidebar-border: 200 30% 88%;
+    --sidebar-ring: 195 100% 40%;
   }
 
   .dark {
