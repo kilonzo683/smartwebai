@@ -44,7 +44,7 @@ export function useResumes() {
   });
 
   const createResume = useMutation({
-    mutationFn: async (title: string = 'My Resume') => {
+    mutationFn: async ({ title = 'My Resume', content }: { title?: string; content?: ResumeContent } = {}) => {
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
@@ -52,7 +52,7 @@ export function useResumes() {
         .insert([{
           user_id: user.id,
           title,
-          content: defaultResumeContent as unknown as Json,
+          content: (content || defaultResumeContent) as unknown as Json,
         }])
         .select()
         .single();
