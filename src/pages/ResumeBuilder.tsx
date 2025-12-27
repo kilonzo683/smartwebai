@@ -392,18 +392,40 @@ export default function ResumeBuilder() {
       {/* Print styles */}
       <style>{`
         @media print {
+          @page {
+            margin: 0;
+            size: A4;
+          }
+          
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          
           body * {
             visibility: hidden;
           }
-          .print\\:shadow-none,
-          .print\\:shadow-none * {
-            visibility: visible;
+          
+          #resume-preview,
+          #resume-preview * {
+            visibility: visible !important;
           }
-          .print\\:shadow-none {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
+          
+          #resume-preview {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+          }
+          
+          header, nav, .sticky, button, .border-b {
+            display: none !important;
           }
         }
       `}</style>

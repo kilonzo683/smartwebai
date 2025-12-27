@@ -132,7 +132,7 @@ export function ResumePreview({ content, template }: ResumePreviewProps) {
 
   return (
     <div 
-      className="bg-white text-gray-900 min-h-full print:p-0 relative overflow-hidden" 
+      className="bg-white text-gray-900 min-h-full relative overflow-hidden print:w-[210mm] print:min-h-[297mm] print:overflow-visible" 
       id="resume-preview"
       style={{ fontFamily: "'Segoe UI', system-ui, sans-serif" }}
     >
