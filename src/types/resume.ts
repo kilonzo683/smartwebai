@@ -6,6 +6,8 @@ export interface ResumePersonal {
   linkedin: string;
   website: string;
   summary: string;
+  photo_url?: string;
+  profession?: string;
 }
 
 export interface ResumeExperience {
@@ -111,6 +113,8 @@ export const defaultResumeContent: ResumeContent = {
     linkedin: '',
     website: '',
     summary: '',
+    photo_url: '',
+    profession: '',
   },
   experiences: [],
   education: [],
