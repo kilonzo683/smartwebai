@@ -59,7 +59,9 @@ Return ONLY this JSON structure (no markdown, no explanation):
     "location": "${input.location}",
     "linkedin": "${input.linkedin || ''}",
     "website": "${input.website || ''}",
-    "summary": "Generated professional summary here"
+    "summary": "Generated professional summary here",
+    "photo_url": "",
+    "profession": "${input.profession}"
   },
   "experiences": [
     {
