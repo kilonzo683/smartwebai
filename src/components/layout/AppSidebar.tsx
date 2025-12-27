@@ -44,7 +44,7 @@ const agents = [
     id: "dashboard",
     name: "Dashboard",
     icon: LayoutDashboard,
-    path: "/",
+    path: "/dashboard",
     color: "text-primary",
   },
   {

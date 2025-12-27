@@ -54,6 +54,7 @@ const App = () => (
                 <Sonner />
                 <BrowserRouter>
                   <Routes>
+                    <Route path="/" element={<Landing />} />
                     <Route path="/landing" element={<Landing />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/privacy" element={<PrivacyPolicy />} />
@@ -75,7 +76,7 @@ const App = () => (
                         </ProtectedRoute>
                       }
                     >
-                      <Route path="/" element={<Index />} />
+                      <Route path="/dashboard" element={<Index />} />
                       <Route path="/secretary" element={<SecretaryAgent />} />
                       <Route path="/support" element={<SupportAgent />} />
                       <Route path="/social" element={<SocialAgent />} />
