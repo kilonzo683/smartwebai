@@ -1,4 +1,4 @@
-import { Sparkles, Zap, Globe, Bot, Shield, BarChart3 } from "lucide-react";
+import { Sparkles, Zap, Globe, Bot, Shield, BarChart3, Cpu, Binary, Network, Atom } from "lucide-react";
 
 export function FloatingElements() {
   return (
