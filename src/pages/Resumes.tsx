@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Plus, FileText, MoreVertical, Trash2, Copy, 
-  Edit, Eye, Loader2, Search, Grid, List,
-  Calendar, Clock
+  Edit, Loader2, Search, Grid, List,
+  Calendar, Clock, Sparkles, PenTool
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,7 +36,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useResumes } from "@/hooks/useResumes";
-import { Resume, RESUME_TEMPLATES } from "@/types/resume";
+import { Resume, ResumeContent, RESUME_TEMPLATES } from "@/types/resume";
+import { AIResumeGenerator } from "@/components/resume/AIResumeGenerator";
 import { format } from "date-fns";
 export default function Resumes() {
   const navigate = useNavigate();
@@ -47,6 +48,7 @@ export default function Resumes() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [createMode, setCreateMode] = useState<"choice" | "manual" | "ai">("choice");
   const [newResumeTitle, setNewResumeTitle] = useState("My Resume");
 
   const filteredResumes = resumes.filter(resume =>
@@ -54,10 +56,24 @@ export default function Resumes() {
   );
 
   const handleCreateResume = async () => {
-    const result = await createResume.mutateAsync(newResumeTitle);
+    const result = await createResume.mutateAsync({ title: newResumeTitle });
     setCreateDialogOpen(false);
+    setCreateMode("choice");
     setNewResumeTitle("My Resume");
     navigate(`/resumes/${result.id}`);
+  };
+
+  const handleAIGenerated = async (content: ResumeContent, title: string) => {
+    const result = await createResume.mutateAsync({ title, content });
+    setCreateDialogOpen(false);
+    setCreateMode("choice");
+    navigate(`/resumes/${result.id}`);
+  };
+
+  const handleCloseDialog = () => {
+    setCreateDialogOpen(false);
+    setCreateMode("choice");
+    setNewResumeTitle("My Resume");
   };
 
   const handleDeleteResume = async () => {
@@ -281,33 +297,82 @@ export default function Resumes() {
         )}
 
         {/* Create Dialog */}
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Resume</DialogTitle>
-              <DialogDescription>
-                Give your resume a name to get started.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <Input
-                placeholder="Resume title"
-                value={newResumeTitle}
-                onChange={(e) => setNewResumeTitle(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleCreateResume();
-                }}
+        <Dialog open={createDialogOpen} onOpenChange={handleCloseDialog}>
+          <DialogContent className={createMode === "ai" ? "max-w-3xl" : ""}>
+            {createMode === "choice" ? (
+              <>
+                <DialogHeader>
+                  <DialogTitle>Create New Resume</DialogTitle>
+                  <DialogDescription>
+                    Choose how you want to create your resume
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4 md:grid-cols-2">
+                  <Card 
+                    className="cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => setCreateMode("ai")}
+                  >
+                    <CardContent className="pt-6 text-center">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                        <Sparkles className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="font-semibold mb-2">AI-Powered</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Enter your profession and contact info, and AI will generate a complete professional resume
+                      </p>
+                      <Badge className="mt-3" variant="secondary">Recommended</Badge>
+                    </CardContent>
+                  </Card>
+                  <Card 
+                    className="cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => setCreateMode("manual")}
+                  >
+                    <CardContent className="pt-6 text-center">
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                        <PenTool className="w-6 h-6 text-muted-foreground" />
+                      </div>
+                      <h3 className="font-semibold mb-2">Manual Entry</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Start with a blank resume and fill in all details yourself
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            ) : createMode === "manual" ? (
+              <>
+                <DialogHeader>
+                  <DialogTitle>Create New Resume</DialogTitle>
+                  <DialogDescription>
+                    Give your resume a name to get started.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <Input
+                    placeholder="Resume title"
+                    value={newResumeTitle}
+                    onChange={(e) => setNewResumeTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleCreateResume();
+                    }}
+                  />
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setCreateMode("choice")}>
+                    Back
+                  </Button>
+                  <Button onClick={handleCreateResume} disabled={createResume.isPending}>
+                    {createResume.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                    Create Resume
+                  </Button>
+                </DialogFooter>
+              </>
+            ) : (
+              <AIResumeGenerator 
+                onGenerated={handleAIGenerated}
+                onCancel={() => setCreateMode("choice")}
               />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleCreateResume} disabled={createResume.isPending}>
-                {createResume.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                Create Resume
-              </Button>
-            </DialogFooter>
+            )}
           </DialogContent>
         </Dialog>
 
