@@ -14,14 +14,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useBranding } from "@/contexts/BrandingContext";
-
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { FloatingElements, HeroOrbs } from "@/components/landing/FloatingElements";
 const features = [
   {
     icon: Mail,
     title: "Smart Secretary Agent",
     description: "Email & schedule automation. Convert voice notes to tasks, manage calendars, draft professional emails, and set smart reminders automatically.",
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
+    color: "text-agent-secretary",
+    bgColor: "bg-agent-secretary/10",
     learnMore: "#secretary",
     capabilities: ["Voice-to-task conversion", "Calendar management", "Email drafting", "Smart reminders"]
   },
@@ -29,8 +30,8 @@ const features = [
     icon: HeadphonesIcon,
     title: "Customer Support Agent",
     description: "AI-powered support with human fallback. Handle FAQs, manage tickets, analyze sentiment, and escalate complex issues intelligently.",
-    color: "text-green-500",
-    bgColor: "bg-green-500/10",
+    color: "text-agent-support",
+    bgColor: "bg-agent-support/10",
     learnMore: "#support",
     capabilities: ["Ticket management", "Sentiment analysis", "Knowledge base", "Smart escalation"]
   },
@@ -38,8 +39,8 @@ const features = [
     icon: Share2,
     title: "Social Media Agent",
     description: "AI flyer generation with dual comparison, image editing, content scheduling, and brand consistency across all platforms.",
-    color: "text-purple-500",
-    bgColor: "bg-purple-500/10",
+    color: "text-agent-social",
+    bgColor: "bg-agent-social/10",
     learnMore: "#social",
     capabilities: ["AI flyer generator", "Dual design comparison", "Image editor", "Content calendar"]
   },
@@ -47,8 +48,8 @@ const features = [
     icon: GraduationCap,
     title: "Lecturer Assistant Agent",
     description: "Auto quizzes from documents, student performance tracking, feedback generation, and comprehensive reporting.",
-    color: "text-orange-500",
-    bgColor: "bg-orange-500/10",
+    color: "text-agent-lecturer",
+    bgColor: "bg-agent-lecturer/10",
     learnMore: "#lecturer",
     capabilities: ["Auto quiz generation", "Performance tracking", "Document analysis", "Report generation"]
   },
@@ -334,6 +335,7 @@ export default function Landing() {
               <button onClick={() => scrollToSection('contact')} className="text-muted-foreground hover:text-foreground transition-colors">
                 Contact
               </button>
+              <ThemeToggle />
               <Link to="/auth">
                 <Button variant="outline">Sign In</Button>
               </Link>
@@ -344,6 +346,7 @@ export default function Landing() {
 
             {/* Mobile Menu Button */}
             <div className="md:hidden flex items-center gap-2">
+              <ThemeToggle />
               <Link to="/auth">
                 <Button size="sm">Get Started</Button>
               </Link>
@@ -382,23 +385,21 @@ export default function Landing() {
       </nav>
 
       {/* 1️⃣ Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-        {/* Background Elements */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse-slow" />
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse-slow" />
-        </div>
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden min-h-[90vh] flex items-center">
+        {/* Futuristic Floating Elements */}
+        <FloatingElements />
+        <HeroOrbs />
 
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8 animate-fade-in">
+        <div className="max-w-7xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8 animate-fade-in backdrop-blur-sm">
             <Sparkles className="w-4 h-4" />
             <span>Powered by Advanced AI</span>
           </div>
           
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight animate-slide-up">
+          <h1 className="text-4xl sm:text-5xl lg:text-7xl font-bold text-foreground mb-6 leading-tight animate-slide-up">
             4 AI Agents.
             <br />
-            <span className="bg-gradient-to-r from-primary via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <span className="gradient-text-hero">
               One Smart Work Platform.
             </span>
           </h1>
@@ -409,12 +410,12 @@ export default function Landing() {
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
             <Link to="/auth">
-              <Button size="lg" className="gap-2 px-8 text-lg">
+              <Button size="lg" className="gap-2 px-8 text-lg glow-primary">
                 Start Free Trial
                 <ArrowRight className="w-5 h-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="px-8 text-lg gap-2">
+            <Button size="lg" variant="outline" className="px-8 text-lg gap-2 backdrop-blur-sm">
               <Play className="w-5 h-5" />
               Watch Demo
             </Button>
@@ -489,8 +490,8 @@ export default function Landing() {
           {/* Social Media Agent Features - Highlighted */}
           <div className="mb-16">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center">
-                <Share2 className="w-6 h-6 text-purple-500" />
+              <div className="w-12 h-12 rounded-xl bg-agent-social/10 flex items-center justify-center">
+                <Share2 className="w-6 h-6 text-agent-social" />
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-foreground">Social Media Agent</h3>
@@ -501,8 +502,8 @@ export default function Landing() {
               {comprehensiveFeatures.socialMedia.map((item, idx) => (
                 <Card key={idx} className="glass border-0 hover:shadow-md transition-all">
                   <CardContent className="p-5">
-                    <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center mb-3">
-                      <item.icon className="w-5 h-5 text-purple-500" />
+                    <div className="w-10 h-10 rounded-lg bg-agent-social/10 flex items-center justify-center mb-3">
+                      <item.icon className="w-5 h-5 text-agent-social" />
                     </div>
                     <h4 className="font-semibold text-foreground mb-1">{item.title}</h4>
                     <p className="text-sm text-muted-foreground">{item.description}</p>
@@ -517,15 +518,15 @@ export default function Landing() {
             {/* Secretary Features */}
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                  <Mail className="w-5 h-5 text-blue-500" />
+                <div className="w-10 h-10 rounded-lg bg-agent-secretary/10 flex items-center justify-center">
+                  <Mail className="w-5 h-5 text-agent-secretary" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Secretary Agent</h3>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {comprehensiveFeatures.secretary.map((item, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-accent/50">
-                    <item.icon className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <item.icon className="w-5 h-5 text-agent-secretary flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-medium text-sm text-foreground">{item.title}</p>
                       <p className="text-xs text-muted-foreground">{item.description}</p>
@@ -538,15 +539,15 @@ export default function Landing() {
             {/* Support Features */}
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                  <HeadphonesIcon className="w-5 h-5 text-green-500" />
+                <div className="w-10 h-10 rounded-lg bg-agent-support/10 flex items-center justify-center">
+                  <HeadphonesIcon className="w-5 h-5 text-agent-support" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Support Agent</h3>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {comprehensiveFeatures.support.map((item, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-accent/50">
-                    <item.icon className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                    <item.icon className="w-5 h-5 text-agent-support flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-medium text-sm text-foreground">{item.title}</p>
                       <p className="text-xs text-muted-foreground">{item.description}</p>
@@ -559,15 +560,15 @@ export default function Landing() {
             {/* Lecturer Features */}
             <div>
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center">
-                  <GraduationCap className="w-5 h-5 text-orange-500" />
+                <div className="w-10 h-10 rounded-lg bg-agent-lecturer/10 flex items-center justify-center">
+                  <GraduationCap className="w-5 h-5 text-agent-lecturer" />
                 </div>
                 <h3 className="text-xl font-bold text-foreground">Lecturer Agent</h3>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 {comprehensiveFeatures.lecturer.map((item, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-accent/50">
-                    <item.icon className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
+                    <item.icon className="w-5 h-5 text-agent-lecturer flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="font-medium text-sm text-foreground">{item.title}</p>
                       <p className="text-xs text-muted-foreground">{item.description}</p>
