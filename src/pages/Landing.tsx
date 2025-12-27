@@ -16,6 +16,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useBranding } from "@/contexts/BrandingContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { FloatingElements, HeroOrbs } from "@/components/landing/FloatingElements";
+import { ParticleField, FloatingGlobe } from "@/components/landing/ParticleField";
+import { Home } from "lucide-react";
 const features = [
   {
     icon: Mail,
@@ -282,44 +284,48 @@ export default function Landing() {
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between h-20">
+            <div className="flex items-center gap-3">
               {branding.logoUrl ? (
                 <>
-                  {/* Desktop Logo */}
+                  {/* Desktop Logo - Larger */}
                   <img 
                     src={branding.logoUrl} 
                     alt={branding.platformName} 
-                    className="hidden sm:block w-10 h-10 rounded-xl object-contain"
+                    className="hidden sm:block w-14 h-14 rounded-xl object-contain"
                   />
-                  {/* Mobile Logo - Smaller */}
+                  {/* Mobile Logo */}
                   <img 
                     src={branding.logoUrl} 
                     alt={branding.platformName} 
-                    className="sm:hidden w-8 h-8 rounded-lg object-contain"
+                    className="sm:hidden w-10 h-10 rounded-lg object-contain"
                   />
                 </>
               ) : (
                 <>
-                  {/* Desktop Fallback */}
-                  <div className="hidden sm:flex w-10 h-10 rounded-xl bg-primary/20 items-center justify-center">
-                    <Sparkles className="w-6 h-6 text-primary" />
+                  {/* Desktop Fallback - Larger */}
+                  <div className="hidden sm:flex w-14 h-14 rounded-xl bg-primary/20 items-center justify-center">
+                    <Sparkles className="w-8 h-8 text-primary" />
                   </div>
                   {/* Mobile Fallback */}
-                  <div className="sm:hidden w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                    <Sparkles className="w-5 h-5 text-primary" />
+                  <div className="sm:hidden w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <Sparkles className="w-6 h-6 text-primary" />
                   </div>
                 </>
               )}
               {/* Desktop: Full name, Mobile: Abbreviated */}
-              <span className="hidden sm:inline text-xl font-bold text-foreground">{branding.platformName}</span>
+              <span className="hidden sm:inline text-2xl font-bold text-foreground">{branding.platformName}</span>
               <span className="sm:hidden text-lg font-bold text-foreground">
                 {branding.platformName.split(' ').map(w => w[0]).join('').slice(0, 4)}
               </span>
             </div>
             
             {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-6">
+            <div className="hidden md:flex items-center gap-5">
+              <Link to="/landing" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                <Home className="w-4 h-4" />
+                Home
+              </Link>
               <button onClick={() => scrollToSection('features')} className="text-muted-foreground hover:text-foreground transition-colors">
                 Features
               </button>
@@ -360,6 +366,10 @@ export default function Landing() {
           {mobileMenuOpen && (
             <div className="md:hidden py-4 border-t border-border">
               <div className="flex flex-col gap-3">
+                <Link to="/landing" className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors py-2">
+                  <Home className="w-4 h-4" />
+                  Home
+                </Link>
                 <button onClick={() => scrollToSection('features')} className="text-left text-muted-foreground hover:text-foreground transition-colors py-2">
                   Features
                 </button>
@@ -385,10 +395,16 @@ export default function Landing() {
       </nav>
 
       {/* 1️⃣ Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden min-h-[90vh] flex items-center">
+      <section className="pt-28 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden min-h-[95vh] flex items-center">
+        {/* Particle Effects Background */}
+        <ParticleField />
+        
         {/* Futuristic Floating Elements */}
         <FloatingElements />
         <HeroOrbs />
+        
+        {/* Floating Globe */}
+        <FloatingGlobe />
 
         <div className="max-w-7xl mx-auto text-center relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8 animate-fade-in backdrop-blur-sm">

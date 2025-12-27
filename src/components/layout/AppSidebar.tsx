@@ -23,7 +23,9 @@ import {
   Crown,
   Menu,
   Wrench,
-  TestTube
+  TestTube,
+  Moon,
+  Sun
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -33,6 +35,7 @@ import { useRole } from "@/contexts/RoleContext";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useBranding } from "@/contexts/BrandingContext";
 import { usePlatformStatus } from "@/contexts/PlatformStatusContext";
+import { useTheme } from "@/hooks/useTheme";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -129,6 +132,7 @@ function SidebarContent({
   const { isSuperAdmin, isOrgAdmin, isSupportAgent } = useRole();
   const { branding } = useBranding();
   const { maintenanceMode, demoMode } = usePlatformStatus();
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -359,6 +363,35 @@ function SidebarContent({
 
       {/* Footer */}
       <div className="p-2 border-t border-sidebar-border space-y-1">
+        {/* Theme Toggle */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={toggleTheme}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-sidebar-foreground hover:bg-accent/50 hover:text-foreground w-full",
+                collapsed && "justify-center"
+              )}
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-5 h-5 flex-shrink-0 text-yellow-500" />
+              ) : (
+                <Moon className="w-5 h-5 flex-shrink-0 text-primary" />
+              )}
+              {!collapsed && (
+                <span className="font-medium text-sm">
+                  {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                </span>
+              )}
+            </button>
+          </TooltipTrigger>
+          {collapsed && (
+            <TooltipContent side="right">
+              <p>{theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</p>
+            </TooltipContent>
+          )}
+        </Tooltip>
+
         <NavLink
           to="/settings"
           onClick={handleNavClick}
