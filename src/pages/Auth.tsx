@@ -53,7 +53,7 @@ export default function Auth() {
   const { user, isLoading: authLoading } = useAuth();
   const { branding } = useBranding();
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/";
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || "/dashboard";
 
   // Check for password recovery mode from URL hash
   useEffect(() => {
@@ -145,7 +145,7 @@ export default function Auth() {
     
     setIsLoading(true);
     try {
-      const redirectUrl = `${window.location.origin}/`;
+      const redirectUrl = `${window.location.origin}/dashboard`;
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -345,7 +345,7 @@ export default function Auth() {
       
       // Clear the URL hash and redirect
       window.history.replaceState(null, "", window.location.pathname);
-      navigate("/", { replace: true });
+      navigate("/dashboard", { replace: true });
     } catch (error) {
       toast({
         title: "Error",
