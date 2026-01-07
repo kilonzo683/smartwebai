@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Plus, FileText, MoreVertical, Trash2, Copy, 
   Edit, Loader2, Search, Grid, List,
-  Calendar, Clock, Sparkles, PenTool
+  Calendar, Clock, Sparkles, PenTool, Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useResumes } from "@/hooks/useResumes";
 import { Resume, ResumeContent, RESUME_TEMPLATES } from "@/types/resume";
 import { AIResumeGenerator } from "@/components/resume/AIResumeGenerator";
+import { CVImportPanel } from "@/components/resume/CVImportPanel";
 import { format } from "date-fns";
+
 export default function Resumes() {
   const navigate = useNavigate();
   const { resumes, isLoading, createResume, deleteResume, duplicateResume } = useResumes();
@@ -48,7 +50,7 @@ export default function Resumes() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [createMode, setCreateMode] = useState<"choice" | "manual" | "ai">("choice");
+  const [createMode, setCreateMode] = useState<"choice" | "manual" | "ai" | "import">("choice");
   const [newResumeTitle, setNewResumeTitle] = useState("My Resume");
 
   const filteredResumes = resumes.filter(resume =>
@@ -298,7 +300,7 @@ export default function Resumes() {
 
         {/* Create Dialog */}
         <Dialog open={createDialogOpen} onOpenChange={handleCloseDialog}>
-          <DialogContent className={createMode === "ai" ? "max-w-3xl" : ""}>
+          <DialogContent className={createMode === "ai" || createMode === "import" ? "max-w-3xl" : ""}>
             {createMode === "choice" ? (
               <>
                 <DialogHeader>
@@ -307,7 +309,22 @@ export default function Resumes() {
                     Choose how you want to create your resume
                   </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4 md:grid-cols-2">
+                <div className="grid gap-4 py-4 md:grid-cols-3">
+                  <Card 
+                    className="cursor-pointer hover:border-primary transition-colors"
+                    onClick={() => setCreateMode("import")}
+                  >
+                    <CardContent className="pt-6 text-center">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                        <Upload className="w-6 h-6 text-primary" />
+                      </div>
+                      <h3 className="font-semibold mb-2">Import from CV</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Paste your existing CV and AI will extract all the details
+                      </p>
+                      <Badge className="mt-3" variant="secondary">Recommended</Badge>
+                    </CardContent>
+                  </Card>
                   <Card 
                     className="cursor-pointer hover:border-primary transition-colors"
                     onClick={() => setCreateMode("ai")}
@@ -318,9 +335,8 @@ export default function Resumes() {
                       </div>
                       <h3 className="font-semibold mb-2">AI-Powered</h3>
                       <p className="text-sm text-muted-foreground">
-                        Enter your profession and contact info, and AI will generate a complete professional resume
+                        Enter your info and AI will generate a professional resume
                       </p>
-                      <Badge className="mt-3" variant="secondary">Recommended</Badge>
                     </CardContent>
                   </Card>
                   <Card 
@@ -333,7 +349,7 @@ export default function Resumes() {
                       </div>
                       <h3 className="font-semibold mb-2">Manual Entry</h3>
                       <p className="text-sm text-muted-foreground">
-                        Start with a blank resume and fill in all details yourself
+                        Start with a blank resume and fill in details yourself
                       </p>
                     </CardContent>
                   </Card>
@@ -367,6 +383,11 @@ export default function Resumes() {
                   </Button>
                 </DialogFooter>
               </>
+            ) : createMode === "import" ? (
+              <CVImportPanel 
+                onImport={handleAIGenerated}
+                onCancel={() => setCreateMode("choice")}
+              />
             ) : (
               <AIResumeGenerator 
                 onGenerated={handleAIGenerated}
