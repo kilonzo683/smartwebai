@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -7,7 +6,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -35,27 +33,27 @@ serve(async (req) => {
 
     const systemPrompt = `You are a CV/Resume parser. Extract structured information from the provided CV/resume text and return it as a JSON object.
 
-Return ONLY a valid JSON object with this exact structure (no markdown, no code blocks, just pure JSON):
+Return ONLY valid JSON (no markdown, no code blocks):
 {
   "personal": {
     "full_name": "string",
     "email": "string", 
     "phone": "string",
     "location": "string",
-    "linkedin": "string or empty",
-    "website": "string or empty",
-    "summary": "professional summary string",
-    "profession": "job title or profession"
+    "linkedin": "",
+    "website": "",
+    "summary": "professional summary",
+    "profession": "job title"
   },
   "experiences": [
     {
       "company": "string",
       "position": "string",
-      "location": "string or empty",
-      "start_date": "YYYY-MM or string",
+      "location": "",
+      "start_date": "YYYY-MM",
       "end_date": "YYYY-MM or Present",
-      "is_current": boolean,
-      "description": "bullet points or description"
+      "is_current": false,
+      "description": "description"
     }
   ],
   "education": [
@@ -63,51 +61,24 @@ Return ONLY a valid JSON object with this exact structure (no markdown, no code 
       "institution": "string",
       "degree": "string",
       "field": "string",
-      "start_date": "YYYY or string",
-      "end_date": "YYYY or string",
-      "description": "string or empty"
+      "start_date": "YYYY",
+      "end_date": "YYYY",
+      "description": ""
     }
   ],
   "skills": [
     {
       "name": "string",
       "level": "beginner|intermediate|advanced|expert",
-      "category": "Technical|Soft Skills|Tools|Languages|Other"
+      "category": "Technical"
     }
   ],
-  "projects": [
-    {
-      "name": "string",
-      "description": "string",
-      "url": "string or empty",
-      "technologies": ["array", "of", "tech"]
-    }
-  ],
-  "certifications": [
-    {
-      "name": "string",
-      "issuer": "string",
-      "issue_date": "string or empty",
-      "expiry_date": "string or empty",
-      "credential_url": "string or empty"
-    }
-  ],
-  "languages": [
-    {
-      "language": "string",
-      "proficiency": "basic|conversational|fluent|native"
-    }
-  ]
+  "projects": [],
+  "certifications": [],
+  "languages": []
 }
 
-Rules:
-- Extract as much information as possible from the CV
-- If a field is not found, use empty string "" or empty array []
-- For skill levels, infer from context (years of experience, how it's mentioned)
-- For language proficiency, infer from how it's described
-- Keep descriptions concise but informative
-- Parse dates in a consistent format when possible
-- If currently employed, set is_current to true and end_date to "Present"`;
+Extract as much as possible. Use empty strings/arrays for missing data.`;
 
     const response = await fetch('https://api.lovable.dev/api/v1/chat/completions', {
       method: 'POST',
@@ -119,16 +90,15 @@ Rules:
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Parse this CV/Resume and extract all information:\n\n${cvText}` }
+          { role: 'user', content: `Parse this CV:\n\n${cvText.substring(0, 15000)}` }
         ],
       }),
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Lovable AI API error:', response.status, errorText);
+      console.error('AI API error:', response.status);
       return new Response(
-        JSON.stringify({ error: 'Failed to parse CV with AI' }),
+        JSON.stringify({ error: 'Failed to parse CV' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -137,44 +107,30 @@ Rules:
     const aiContent = data.choices?.[0]?.message?.content;
 
     if (!aiContent) {
-      console.error('No content in AI response');
       return new Response(
-        JSON.stringify({ error: 'No response from AI' }),
+        JSON.stringify({ error: 'No AI response' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('AI response received, parsing JSON...');
-
-    // Clean the response - remove markdown code blocks if present
     let cleanedContent = aiContent.trim();
-    if (cleanedContent.startsWith('```json')) {
-      cleanedContent = cleanedContent.slice(7);
-    } else if (cleanedContent.startsWith('```')) {
-      cleanedContent = cleanedContent.slice(3);
-    }
-    if (cleanedContent.endsWith('```')) {
-      cleanedContent = cleanedContent.slice(0, -3);
-    }
+    if (cleanedContent.startsWith('```json')) cleanedContent = cleanedContent.slice(7);
+    else if (cleanedContent.startsWith('```')) cleanedContent = cleanedContent.slice(3);
+    if (cleanedContent.endsWith('```')) cleanedContent = cleanedContent.slice(0, -3);
     cleanedContent = cleanedContent.trim();
 
     let parsedResume;
     try {
       parsedResume = JSON.parse(cleanedContent);
-    } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', parseError);
-      console.error('Content was:', cleanedContent.substring(0, 500));
+    } catch {
+      console.error('JSON parse error');
       return new Response(
         JSON.stringify({ error: 'Failed to parse AI response' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Add IDs to array items
-    const addIds = (arr: any[]) => arr.map((item, idx) => ({ 
-      ...item, 
-      id: crypto.randomUUID() 
-    }));
+    const addIds = (arr: any[]) => arr.map(item => ({ ...item, id: crypto.randomUUID() }));
 
     const result = {
       personal: parsedResume.personal || {},
@@ -194,9 +150,9 @@ Rules:
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
-    console.error('Error in parse-cv function:', error);
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({ error: error.message || 'Failed to parse CV' }),
+      JSON.stringify({ error: 'Failed to parse CV' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
