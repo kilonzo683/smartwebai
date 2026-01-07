@@ -24,6 +24,7 @@ import { CertificationsEditor } from "@/components/resume/CertificationsEditor";
 import { LanguagesEditor } from "@/components/resume/LanguagesEditor";
 import { ResumePreview } from "@/components/resume/ResumePreview";
 import { VersionHistory } from "@/components/resume/VersionHistory";
+import { CVImporter } from "@/components/resume/CVImporter";
 import { useToast } from "@/hooks/use-toast";
 import { useBranding } from "@/contexts/BrandingContext";
 
@@ -91,6 +92,14 @@ export default function ResumeBuilder() {
   const updateContent = useCallback((updates: Partial<ResumeContent>) => {
     setLocalContent(prev => prev ? { ...prev, ...updates } : null);
   }, []);
+
+  const handleCVImport = useCallback((importedContent: ResumeContent) => {
+    setLocalContent(importedContent);
+    toast({
+      title: "Resume updated!",
+      description: "All sections have been populated from your CV.",
+    });
+  }, [toast]);
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
@@ -197,6 +206,8 @@ export default function ResumeBuilder() {
           </div>
           
           <div className="flex items-center gap-2">
+            <CVImporter onImport={handleCVImport} />
+
             <Select value={localTemplate} onValueChange={setLocalTemplate}>
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Template" />
