@@ -13,6 +13,12 @@ interface ExperienceEditorProps {
   onChange: (experiences: ResumeExperience[]) => void;
 }
 
+// Validate date is in yyyy-MM format for month inputs
+const isValidMonthFormat = (date: string): boolean => {
+  if (!date) return false;
+  return /^\d{4}-\d{2}$/.test(date);
+};
+
 export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProps) {
   const addExperience = () => {
     const newExp: ResumeExperience = {
@@ -106,7 +112,7 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
                       </Label>
                       <Input
                         type="month"
-                        value={exp.start_date}
+                        value={isValidMonthFormat(exp.start_date) ? exp.start_date : ""}
                         onChange={(e) => updateExperience(index, { start_date: e.target.value })}
                       />
                     </div>
@@ -117,7 +123,7 @@ export function ExperienceEditor({ experiences, onChange }: ExperienceEditorProp
                       </Label>
                       <Input
                         type="month"
-                        value={exp.end_date}
+                        value={isValidMonthFormat(exp.end_date) ? exp.end_date : ""}
                         onChange={(e) => updateExperience(index, { end_date: e.target.value })}
                         disabled={exp.is_current}
                       />

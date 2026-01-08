@@ -11,6 +11,12 @@ interface EducationEditorProps {
   onChange: (education: ResumeEducation[]) => void;
 }
 
+// Validate date is in yyyy-MM format for month inputs
+const isValidMonthFormat = (date: string): boolean => {
+  if (!date) return false;
+  return /^\d{4}-\d{2}$/.test(date);
+};
+
 export function EducationEditor({ education, onChange }: EducationEditorProps) {
   const addEducation = () => {
     const newEdu: ResumeEducation = {
@@ -87,7 +93,7 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
                       </Label>
                       <Input
                         type="month"
-                        value={edu.start_date}
+                        value={isValidMonthFormat(edu.start_date) ? edu.start_date : ""}
                         onChange={(e) => updateEducation(index, { start_date: e.target.value })}
                       />
                     </div>
@@ -98,7 +104,7 @@ export function EducationEditor({ education, onChange }: EducationEditorProps) {
                       </Label>
                       <Input
                         type="month"
-                        value={edu.end_date}
+                        value={isValidMonthFormat(edu.end_date) ? edu.end_date : ""}
                         onChange={(e) => updateEducation(index, { end_date: e.target.value })}
                       />
                     </div>
