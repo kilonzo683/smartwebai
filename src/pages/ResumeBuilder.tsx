@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useResume, useResumes } from "@/hooks/useResumes";
-import { Resume, ResumeContent, RESUME_TEMPLATES } from "@/types/resume";
+import { Resume, ResumeContent, RESUME_TEMPLATES, defaultResumeContent } from "@/types/resume";
 import { PersonalInfoEditor } from "@/components/resume/PersonalInfoEditor";
 import { ExperienceEditor } from "@/components/resume/ExperienceEditor";
 import { EducationEditor } from "@/components/resume/EducationEditor";
@@ -51,7 +51,18 @@ export default function ResumeBuilder() {
 
   useEffect(() => {
     if (resume) {
-      setLocalContent(resume.content);
+      // Ensure all arrays exist with defaults to prevent crashes
+      const content = resume.content;
+      setLocalContent({
+        personal: content.personal || defaultResumeContent.personal,
+        experiences: content.experiences || [],
+        education: content.education || [],
+        skills: content.skills || [],
+        projects: content.projects || [],
+        certifications: content.certifications || [],
+        languages: content.languages || [],
+        custom_sections: content.custom_sections || [],
+      });
       setLocalTitle(resume.title);
       setLocalTemplate(resume.template);
     }
