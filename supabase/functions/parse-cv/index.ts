@@ -80,7 +80,7 @@ Return ONLY valid JSON (no markdown, no code blocks):
 
 Extract as much as possible. Use empty strings/arrays for missing data.`;
 
-    const response = await fetch('https://api.lovable.dev/api/v1/chat/completions', {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${lovableApiKey}`,
@@ -96,7 +96,22 @@ Extract as much as possible. Use empty strings/arrays for missing data.`;
     });
 
     if (!response.ok) {
-      console.error('AI API error:', response.status);
+      const errorText = await response.text();
+      console.error('AI API error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: 'AI credits exhausted. Please add credits to continue.' }),
+          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
       return new Response(
         JSON.stringify({ error: 'Failed to parse CV' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -123,7 +138,7 @@ Extract as much as possible. Use empty strings/arrays for missing data.`;
     try {
       parsedResume = JSON.parse(cleanedContent);
     } catch {
-      console.error('JSON parse error');
+      console.error('JSON parse error, raw content:', cleanedContent);
       return new Response(
         JSON.stringify({ error: 'Failed to parse AI response' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
