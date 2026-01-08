@@ -42,16 +42,18 @@ export function ProjectsEditor({ projects, onChange }: ProjectsEditorProps) {
     if (!tech) return;
     
     const project = projects[index];
-    if (!project.technologies.includes(tech)) {
-      updateProject(index, { technologies: [...project.technologies, tech] });
+    const currentTech = project.technologies || [];
+    if (!currentTech.includes(tech)) {
+      updateProject(index, { technologies: [...currentTech, tech] });
     }
     setNewTech({ ...newTech, [projectId]: "" });
   };
 
   const removeTechnology = (index: number, techIndex: number) => {
     const project = projects[index];
+    const currentTech = project.technologies || [];
     updateProject(index, { 
-      technologies: project.technologies.filter((_, i) => i !== techIndex) 
+      technologies: currentTech.filter((_, i) => i !== techIndex) 
     });
   };
 
@@ -103,7 +105,7 @@ export function ProjectsEditor({ projects, onChange }: ProjectsEditorProps) {
                   <div className="space-y-2">
                     <Label>Technologies Used</Label>
                     <div className="flex flex-wrap gap-2 mb-2">
-                      {project.technologies.map((tech, techIndex) => (
+                      {(project.technologies || []).map((tech, techIndex) => (
                         <Badge key={techIndex} variant="secondary" className="group/tech">
                           {tech}
                           <button
